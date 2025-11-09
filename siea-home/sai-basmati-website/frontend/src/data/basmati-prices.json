@@ -1,0 +1,224 @@
+[
+  {
+    "variety": {
+      "en": "1121 Basmati",
+      "te": "1121 బాస్మతి",
+      "hi": "1121 बासमती",
+      "ur": "1121 باسمتی",
+      "es": "Basmati 1121",
+      "fr": "Basmati 1121"
+    },
+    "grade": {
+      "en": "Steam",
+      "te": "స్టీమ్",
+      "hi": "स्टीम",
+      "ur": "بھاپ",
+      "es": "Vapor",
+      "fr": "Vapeur"
+    },
+    "price_inr": 110,
+    "moq": 5000,
+    "origin": {
+      "en": "Punjab",
+      "te": "పంజాబ్",
+      "hi": "पंजाब",
+      "ur": "پنجاب",
+      "es": "Punjab",
+      "fr": "Pendjab"
+    },
+    "harvest": "Nov 2024",
+    "stock": {
+      "en": "High",
+      "te": "ఎక్కువ",
+      "hi": "उच्च",
+      "ur": "زیادہ",
+      "es": "Alto",
+      "fr": "Élevé"
+    }
+  },
+  {
+    "variety": {
+      "en": "1121 Basmati",
+      "te": "1121 బాస్మతి",
+      "hi": "1121 बासमती",
+      "ur": "1121 باسمتی",
+      "es": "Basmati 1121",
+      "fr": "Basmati 1121"
+    },
+    "grade": {
+      "en": "Golden Sella",
+      "te": "గోల్డెన్ సెల్లా",
+      "hi": "गोल्डन सेला",
+      "ur": "گولڈن سیلا",
+      "es": "Sella Dorado",
+      "fr": "Sella Doré"
+    },
+    "price_inr": 115,
+    "moq": 5000,
+    "origin": {
+      "en": "Haryana",
+      "te": "హర్యానా",
+      "hi": "हरियाणा",
+      "ur": "ہریانہ",
+      "es": "Haryana",
+      "fr": "Haryana"
+    },
+    "harvest": "Nov 2024",
+    "stock": {
+      "en": "High",
+      "te": "ఎక్కువ",
+      "hi": "उच्च",
+      "ur": "زیادہ",
+      "es": "Alto",
+      "fr": "Élevé"
+    }
+  },
+  {
+    "variety": {
+      "en": "1121 Basmati",
+      "te": "1121 బాస్మతి",
+      "hi": "1121 बासमती",
+      "ur": "1121 باسمتی",
+      "es": "Basmati 1121",
+      "fr": "Basmati 1121"
+    },
+    "grade": {
+      "en": "White Sella",
+      "te": "వైట్ సెల్లా",
+      "hi": "व्हाइट सेला",
+      "ur": "وائٹ سیلا",
+      "es": "Sella Blanco",
+      "fr": "Sella Blanc"
+    },
+    "price_inr": 113,
+    "moq": 5000,
+    "origin": {
+      "en": "Uttar Pradesh",
+      "te": "ఉత్తర ప్రదేశ్",
+      "hi": "उत्तर प्रदेश",
+      "ur": "اتر پردیش",
+      "es": "Uttar Pradesh",
+      "fr": "Uttar Pradesh"
+    },
+    "harvest": "Dec 2024",
+    "stock": {
+      "en": "Medium",
+      "te": "మధ్యస్థం",
+      "hi": "मध्यम",
+      "ur": "درمیانہ",
+      "es": "Medio",
+      "fr": "Moyen"
+    }
+  },
+  {
+    "variety": {
+      "en": "Pusa Basmati",
+      "te": "పూసా బాస్మతి",
+      "hi": "पusa बासमती",
+      "ur": "پوسا باسمتی",
+      "es": "Basmati Pusa",
+      "fr": "Basmati Pusa"
+    },
+    "grade": {
+      "en": "Steam",
+      "te": "స్టీమ్",
+      "hi": "स्टीम",
+      "ur": "بھاپ",
+      "es": "Vapor",
+      "fr": "Vapeur"
+    },
+    "price_inr": 96,
+    "moq": 5000,
+    "origin": {
+      "en": "Punjab",
+      "te": "పంజాబ్",
+      "hi": "पंजाब",
+      "ur": "پنجاب",
+      "es": "Punjab",
+      "fr": "Pendjab"
+    },
+    "harvest": "Dec 2024",
+    "stock": {
+      "en": "Medium",
+      "te": "మధ్యస్థం",
+      "hi": "मध्यम",
+      "ur": "درمیانہ",
+      "es": "Medio",
+      "fr": "Moyen"
+    }
+  },
+  {
+    "variety": {
+      "en": "Pusa Basmati",
+      "te": "పూసా బాస్మతి",
+      "hi": "पusa बासमती",
+      "ur": "پوسا باسمتی",
+      "es": "Basmati Pusa",
+      "fr": "Basmati Pusa"
+    },
+    "grade": {
+      "en": "Golden Sella",
+      "te": "గోల్డెన్ సెల్లా",
+      "hi": "गोल्डन सेला",
+      "ur": "گولڈن سیلا",
+      "es": "Sella Dorado",
+      "fr": "Sella Doré"
+    },
+    "price_inr": 100,
+    "moq": 5000,
+    "origin": {
+      "en": "Haryana",
+      "te": "హర్యానా",
+      "hi": "हरियाणा",
+      "ur": "ہریانہ",
+      "es": "Haryana",
+      "fr": "Haryana"
+    },
+    "harvest": "Dec 2024",
+    "stock": {
+      "en": "Medium",
+      "te": "మధ్యస్థం",
+      "hi": "मध्यम",
+      "ur": "درمیانہ",
+      "es": "Medio",
+      "fr": "Moyen"
+    }
+  },
+  {
+    "variety": {
+      "en": "Traditional Basmati",
+      "te": "సాంప్రదాయ బాస్మతి",
+      "hi": "पारंपरिक बासमती",
+      "ur": "روایتی باسمتی",
+      "es": "Basmati Tradicional",
+      "fr": "Basmati Traditionnel"
+    },
+    "grade": {
+      "en": "Raw",
+      "te": "పచ్చి",
+      "hi": "कच्चा",
+      "ur": "خام",
+      "es": "Crudo",
+      "fr": "Brut"
+    },
+    "price_inr": 130,
+    "moq": 2000,
+    "origin": {
+      "en": "Jammu & Kashmir",
+      "te": "జమ్మూ & కాశ్మీర్",
+      "hi": "जम्मू और कश्मीर",
+      "ur": "جموں و کشمیر",
+      "es": "Jammu y Cachemira",
+      "fr": "Jammu-et-Cachemire"
+    },
+    "harvest": "Oct 2024",
+    "stock": {
+      "en": "Low",
+      "te": "తక్కువ",
+      "hi": "निम्न",
+      "ur": "کم",
+      "es": "Bajo",
+      "fr": "Faible"
+    }
+  }
+]
