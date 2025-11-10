@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLanguage } from "../contexts/LanguageContext";
-import { riceData, getGradeSpecificPriceRange } from "../data/Products.js";
+import { riceData, getGradeSpecificPriceRange } from "../data/products.js";
 import ThankYouPopup from "../components/ThankYouPopup";
 import { submitQuote } from "../firebasequote";
 import { transportPricing, getTransportPrice, getAvailablePortsForState } from "../components/Transport";
