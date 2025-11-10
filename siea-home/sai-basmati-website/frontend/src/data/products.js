@@ -858,7 +858,7 @@ export const products = [
     },
     category: "Basmati Rice",
     price: getGradeSpecificPriceRange("1509 Basmati"),
-    image: "./public/img/1509_Steam_Basmati.jpg",
+    image: "./img/1509_Steam_Basmati.jpg",
     desc: {
       en: "Premium aromatic Basmati rice.",
       te: "ప్రీమియం సువాసన గల బాస్మతి బియ్యం.",
