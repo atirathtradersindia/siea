@@ -67,9 +67,7 @@ const AppContent = ({ profile, showWarning }) => {
   return (
     <div key="app-content" className="flex flex-1">
       {showRssFeed && <BasmatiRSSFeed />}
-      {/* Main Content: Sidebar and Products */}
-      <div className="flex flex-1 mt-14"> {/* Reduced from mt-16 to mt-14 for less space */}
-        {/* Fixed Sidebar */}
+      <div className="flex flex-1 mt-14">
         <div
           className={`fixed top-[60px] bottom-[64px] transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-0'
             } bg-[#111111] z-40 overflow-hidden`}
@@ -81,8 +79,6 @@ const AppContent = ({ profile, showWarning }) => {
             toggleSidebar={toggleSidebar}
           />
         </div>
-
-        {/* Scrollable Products Grid */}
         <div
           className={`products-container flex-1 transition-all duration-300 p-4 ${isSidebarOpen ? 'sidebar-open' : 'ml-0'
             }`}
@@ -96,7 +92,6 @@ const AppContent = ({ profile, showWarning }) => {
         </div>
       </div>
 
-      {/* Modals */}
       <BuyModal
         isOpen={isBuyModalOpen}
         onClose={hideBuyModal}
