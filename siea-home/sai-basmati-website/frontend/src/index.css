@@ -97,11 +97,13 @@ footer {
 /* Products grid */
 .products-grid {
   display: grid !important;
-  grid-template-columns: repeat(3, 1fr) !important;
-  gap: 1rem;
-  box-sizing: border-box;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+  gap: 1.5rem;
   width: 100%;
+  max-width: 100%;
   margin-top: 1rem;
+  padding: 0 0.75rem;
+  box-sizing: border-box;
 }
 @media (min-width: 1025px) {
   .products-grid {
@@ -959,12 +961,18 @@ label {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 18rem;
-  overflow: visible;
+  max-width: none;                     /* removes old 18rem cap */
+  height: 100%;
   border-radius: 1rem;
   border: 1.5px solid rgba(255, 215, 0, 0.133);
-  box-sizing: border-box;
-  margin: 0 auto;
+  background: #1a1a1a;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,.15);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(255,215,0,.3);
 }
 .product-image {
   width: 100%;
@@ -978,17 +986,18 @@ label {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  gap: 0.25rem;
 }
 .product-name {
   font-size: 1.25rem;
   font-weight: 700;
   color: #FFD700;
-  margin: 0 0 0.25rem 0;
+  margin: 0;
 }
 .product-desc {
   font-size: 0.875rem;
   color: #FFD700;
-  margin: 0.25rem 0 0.5rem 0;
+  margin: 0.25rem 0 0.5rem;
   flex-grow: 1;
 }
 .product-footer {
@@ -998,7 +1007,7 @@ label {
   font-size: 1.125rem;
   font-weight: 700;
   color: #FFD700;
-  margin: 0 0 0.25rem 0;
+  margin: 0 0 0.25rem;
 }
 .product-footer-bottom {
   display: flex;
@@ -1011,17 +1020,17 @@ label {
   color: #FBBF24;
 }
 .btn-view-details {
-  background-color: #F59E0B;
+  background: #F59E0B;
   color: white;
   padding: 0.25rem 1rem;
   font-size: 0.875rem;
   border: none;
   border-radius: 0.375rem;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background .3s;
 }
 .btn-view-details:hover {
-  background-color: #D97706;
+  background: #D97706;
 }
 .swiper-pagination {
   position: relative !important;
