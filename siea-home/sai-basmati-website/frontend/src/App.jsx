@@ -18,7 +18,7 @@ import Login from "./components/Login";
 import ProductApp from "./components/ProductApp";
 import ProfilePanel from "./components/ProfilePanel";
 import Feedback from "./pages/Feedback";
-import Contact from "./components/Contact";
+import Contact from "./components/contact";
 import Service from "./components/Service";
 import Blog from "./components/Blog";
 import Transport from "./components/Transport";
