@@ -216,7 +216,7 @@ export default function App() {
               <Route path="/Products-All" element={<ProductApp profile={profile} setProfile={setProfile} showWarning={showWarning} />} />
               <Route path="/register" element={<Register setProfile={setProfile} />} />
               <Route path="/login" element={<Login setProfile={setProfile} />} />
-              <Route path="/contact" element={<Contact />} />
+              <Route path="#" element={<Contact />} />
               <Route path="/service" element={<Service />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/transport" element={<Transport />} />
