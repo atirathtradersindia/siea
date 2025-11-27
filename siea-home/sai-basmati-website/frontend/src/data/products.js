@@ -857,12 +857,8 @@ export const products = [
       fr: "Riz Basmati 1509"
     },
     category: "Basmati Rice",
+    image: "./img/1509_steam_basmati.jpg",
     price: getGradeSpecificPriceRange("1509 Basmati"),
-<<<<<<< HEAD:siea-home/siea-home/sai-basmati-website/frontend/src/data/products.js
-    image: "./img/1509_steam_Basamati.jpg",
-=======
-    image: "./img/1509_Steam_Basmati.jpg",
->>>>>>> 655e62eea185454b82d2040b6495db9295145e9d:siea-home/sai-basmati-website/frontend/src/data/products.js
     desc: {
       en: "Premium aromatic Basmati rice.",
       te: "ప్రీమియం సువాసన గల బాస్మతి బియ్యం.",
