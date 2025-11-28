@@ -21,8 +21,7 @@ const loadRazorpay = () => {
 
 const loadPaypal = (currency = "USD") => {
   return new Promise((resolve) => {
-    // Use PayPal's sandbox client ID for testing
-    const clientId = "AURJ-JxP9ks57rmAjpgygYWhay5TjDahC_6o5s89h7tu73o-UIlm7mYFSb_CSqS3u7l1TDAyQizRXLqV";
+    const clientId = process.env.REACT_APP_PAYPAL_CLIENT_ID || "AURJ-JxP9ks57rmAjpgygYWhay5TjDahC_6o5s89h7tu73o-UIlm7mYFSb_CSqS3u7l1TDAyQizRXLqV";
     const script = document.createElement("script");
     script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=${currency}`;
     script.onload = () => {
@@ -41,7 +40,7 @@ const Service = () => {
   const { t } = useLanguage();
   const [selectedService, setSelectedService] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [shippingMethod, setShippingMethod] = useState('airways'); // 'airways' or 'train'
+  const [shippingMethod, setShippingMethod] = useState('airways');
 
   const countryCodeRules = {
     '+91': { name: 'India', length: 10, api: 'india' },
@@ -71,22 +70,19 @@ const Service = () => {
   const [paypalError, setPaypalError] = useState('');
   const [apiLoading, setApiLoading] = useState(false);
 
-  // Get API base URL from environment variables with fallback
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:8000";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "https://siea.onrender.com";
 
-  // Shipping charges
   const shippingCharges = {
     india: {
       airways: 350,
       train: 250
     },
     international: {
-      airways: 1500, // Assumed price for international shipping
-      ship: 800    // Assumed price for international shipping
+      airways: 1500,
+      ship: 800
     }
   };
 
-  // Quantity options with conversion factors to kg
   const quantityOptions = [
     { label: "300 grams", value: "300 grams", kg: 0.3 },
     { label: "500 grams", value: "500 grams", kg: 0.5 },
@@ -119,7 +115,6 @@ const Service = () => {
     setGradeMap(map);
   }, []);
 
-  // Calculate price for a specific rice item based on quantity
   const calculateItemPrice = (variety, grade, quantityValue) => {
     const riceItem = riceData.find(item => 
       item.variety === variety && item.grade === grade
@@ -130,33 +125,28 @@ const Service = () => {
     const quantityOption = quantityOptions.find(q => q.value === quantityValue);
     if (!quantityOption) return 0;
 
-    // Price per kg from riceData, convert to required quantity
     const pricePerKg = riceItem.price_inr;
     return pricePerKg * quantityOption.kg;
   };
 
-  // Calculate total rice price
   const calculateTotalRicePrice = () => {
     return form.selectedItems.reduce((total, item) => {
       return total + calculateItemPrice(item.variety, item.grade, item.quantity);
     }, 0);
   };
 
-  // Calculate shipping charges
   const calculateShippingCharges = () => {
     const isInternational = form.countryCode !== '+91';
     const charges = isInternational ? shippingCharges.international : shippingCharges.india;
     return charges[shippingMethod];
   };
 
-  // Calculate total amount
   const calculateTotalAmount = () => {
     const riceTotal = calculateTotalRicePrice();
     const shipping = calculateShippingCharges();
     return riceTotal + shipping;
   };
 
-  // Convert INR to other currencies for PayPal
   const convertToLocalCurrency = (amountINR) => {
     const totalAmount = amountINR;
     let currency = "USD";
@@ -164,37 +154,36 @@ const Service = () => {
 
     if (form.countryCode !== '+91') {
       switch (form.countryCode) {
-        case '+1': // USA/Canada
+        case '+1':
           currency = "USD";
-          amount = totalAmount * 0.012; // Convert INR to USD
+          amount = totalAmount * 0.012;
           break;
-        case '+44': // UK
+        case '+44':
           currency = "GBP";
-          amount = totalAmount * 0.009; // Convert INR to GBP
+          amount = totalAmount * 0.009;
           break;
-        case '+971': // UAE
+        case '+971':
           currency = "AED";
-          amount = totalAmount * 0.044; // Convert INR to AED
+          amount = totalAmount * 0.044;
           break;
-        case '+966': // Saudi Arabia
+        case '+966':
           currency = "SAR";
-          amount = totalAmount * 0.045; // Convert INR to SAR
+          amount = totalAmount * 0.045;
           break;
-        case '+81': // Japan
+        case '+81':
           currency = "JPY";
-          amount = totalAmount * 1.8; // Convert INR to JPY
+          amount = totalAmount * 1.8;
           break;
-        case '+49': // Germany
-        case '+33': // France
+        case '+49':
+        case '+33':
           currency = "EUR";
-          amount = totalAmount * 0.011; // Convert INR to EUR
+          amount = totalAmount * 0.011;
           break;
-        case '+86': // China
+        case '+86':
           currency = "CNY";
-          amount = totalAmount * 0.085; // Convert INR to CNY
+          amount = totalAmount * 0.085;
           break;
         default:
-          // For other countries, use USD as default
           currency = "USD";
           amount = totalAmount * 0.012;
       }
@@ -202,7 +191,7 @@ const Service = () => {
 
     return {
       currency,
-      amount: Math.round(amount * 100) / 100, // Round to 2 decimal places
+      amount: Math.round(amount * 100) / 100,
       amountINR: totalAmount
     };
   };
@@ -426,7 +415,7 @@ const Service = () => {
     }
 
     const fullPhone = form.countryCode + form.phone;
-    const whatsappNumber = '919247485871';
+    const whatsappNumber = process.env.REACT_APP_WHATSAPP_NUMBER || '919247485871';
     const address = `${form.doorNo}, ${form.area}, ${form.town}, ${form.city}, ${form.district} - ${form.pincode}${form.landmark ? ` (Landmark: ${form.landmark})` : ''}`;
 
     const itemsList = form.selectedItems.map((item, i) =>
@@ -482,7 +471,6 @@ ${itemsList}
   };
 
   const startRazorpayPayment = async () => {
-    // Validate form before payment
     setForm(prev => ({ ...prev, submitted: true }));
 
     if (!allFieldsValid()) {
@@ -502,44 +490,41 @@ ${itemsList}
 
       const totalAmount = calculateTotalAmount();
       
-      // Determine currency based on country
       let currency = "INR";
       let amount = totalAmount;
       
-      // Convert to local currency for international customers
       if (form.countryCode !== '+91') {
         switch (form.countryCode) {
-          case '+1': // USA/Canada
+          case '+1':
             currency = "USD";
-            amount = totalAmount * 0.012; // Convert INR to USD
+            amount = totalAmount * 0.012;
             break;
-          case '+44': // UK
+          case '+44':
             currency = "GBP";
-            amount = totalAmount * 0.009; // Convert INR to GBP
+            amount = totalAmount * 0.009;
             break;
-          case '+971': // UAE
+          case '+971':
             currency = "AED";
-            amount = totalAmount * 0.044; // Convert INR to AED
+            amount = totalAmount * 0.044;
             break;
-          case '+966': // Saudi Arabia
+          case '+966':
             currency = "SAR";
-            amount = totalAmount * 0.045; // Convert INR to SAR
+            amount = totalAmount * 0.045;
             break;
-          case '+81': // Japan
+          case '+81':
             currency = "JPY";
-            amount = totalAmount * 1.8; // Convert INR to JPY
+            amount = totalAmount * 1.8;
             break;
-          case '+49': // Germany
-          case '+33': // France
+          case '+49':
+          case '+33':
             currency = "EUR";
-            amount = totalAmount * 0.011; // Convert INR to EUR
+            amount = totalAmount * 0.011;
             break;
-          case '+86': // China
+          case '+86':
             currency = "CNY";
-            amount = totalAmount * 0.085; // Convert INR to CNY
+            amount = totalAmount * 0.085;
             break;
           default:
-            // For other countries, use USD as default
             currency = "USD";
             amount = totalAmount * 0.012;
         }
@@ -547,7 +532,10 @@ ${itemsList}
 
       const orderRes = await fetch(`${API_BASE_URL}/create-razorpay-order`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         body: JSON.stringify({ 
           amount: Math.round(amount),
           currency: currency
@@ -567,17 +555,15 @@ ${itemsList}
       const order = data.order;
 
       const options = {
-        key: "rzp_test_RfSBzDny9nssx0",
+        key: process.env.REACT_APP_RAZORPAY_KEY_ID || "rzp_test_RfSBzDny9nssx0",
         amount: order.amount,
         currency: order.currency,
-        name: "Sai Import Export Agro",
+        name: process.env.REACT_APP_COMPANY_NAME || "Sai Import Export Agro",
         description: "Rice Sample Courier Service Payment",
         order_id: order.id,
         handler: function (response) {
-          // Payment successful - send to WhatsApp
           const success = sendToWhatsApp(currency, amount, "Razorpay");
           if (success) {
-            // Reset form after successful submission
             setForm({
               name: '', company: '', doorNo: '', area: '', town: '', city: '', district: '', pincode: '', landmark: '',
               phone: '', email: '', countryCode: '+91', selectedItems: [], submitted: false
@@ -606,7 +592,6 @@ ${itemsList}
     } catch (error) {
       console.error('Payment error:', error);
       
-      // More specific error messages
       if (error.message.includes('Failed to fetch')) {
         alert("Cannot connect to payment server. Please check your internet connection or try again later.");
       } else if (error.message.includes('Failed to create order')) {
@@ -621,7 +606,6 @@ ${itemsList}
   };
 
   const startPaypalPayment = async () => {
-    // Validate form before payment
     setForm(prev => ({ ...prev, submitted: true }));
 
     if (!allFieldsValid()) {
@@ -635,7 +619,6 @@ ${itemsList}
     try {
       const { currency, amount } = convertToLocalCurrency(calculateTotalAmount());
       
-      // Load PayPal SDK with the correct currency
       const loaded = await loadPaypal(currency);
       if (!loaded) {
         setPaypalError("PayPal SDK failed to load. Please try again or use another payment method.");
@@ -645,20 +628,17 @@ ${itemsList}
 
       setPaypalLoaded(true);
 
-      // Clear any existing PayPal buttons
       const paypalButtonsContainer = document.getElementById('paypal-button-container');
       if (paypalButtonsContainer) {
         paypalButtonsContainer.innerHTML = '';
       }
 
-      // Check if PayPal is available
       if (!window.paypal) {
         setPaypalError("PayPal is not available. Please try again later.");
         setPaymentLoading(false);
         return;
       }
 
-      // Render PayPal buttons
       window.paypal.Buttons({
         createOrder: function(data, actions) {
           return actions.order.create({
@@ -673,10 +653,8 @@ ${itemsList}
         },
         onApprove: function(data, actions) {
           return actions.order.capture().then(function(details) {
-            // Payment successful - send to WhatsApp
             const success = sendToWhatsApp(currency, `${amount.toFixed(2)} ${currency}`, "PayPal");
             if (success) {
-              // Reset form after successful submission
               setForm({
                 name: '', company: '', doorNo: '', area: '', town: '', city: '', district: '', pincode: '', landmark: '',
                 phone: '', email: '', countryCode: '+91', selectedItems: [], submitted: false
@@ -705,10 +683,8 @@ ${itemsList}
 
   const startPayment = () => {
     if (form.countryCode === '+91') {
-      // Indian customer - use Razorpay
       startRazorpayPayment();
     } else {
-      // International customer - use PayPal
       startPaypalPayment();
     }
   };
@@ -744,7 +720,6 @@ ${itemsList}
 
   const showForm = selectedService === "Sample Courier Services";
 
-  // Get payment button text based on country
   const getPaymentButtonText = () => {
     const totalAmount = calculateTotalAmount();
     if (form.countryCode === '+91') {
@@ -755,7 +730,6 @@ ${itemsList}
     }
   };
 
-  // Fallback payment method for when PayPal fails
   const handleFallbackPayment = () => {
     if (form.countryCode === '+91') {
       startRazorpayPayment();
@@ -901,7 +875,6 @@ ${itemsList}
                     </div>
                   </div>
 
-                  {/* Shipping Method Selection */}
                   <div className="tw-bg-black/50 tw-backdrop-blur-lg tw-rounded-3xl tw-p-8 tw-border-2 tw-border-yellow-600">
                     <h5 className="tw-text-xl tw-font-bold tw-text-yellow-400 tw-mb-6 tw-text-center">Shipping Method</h5>
                     <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-6">
@@ -1056,7 +1029,6 @@ ${itemsList}
                           ))}
                         </div>
                         
-                        {/* Price Summary */}
                         <div className="tw-mt-6 tw-p-6 tw-bg-black/50 tw-rounded-xl tw-border tw-border-yellow-600">
                           <h6 className="tw-text-xl tw-font-bold tw-text-yellow-300 tw-mb-4">Price Summary</h6>
                           <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
@@ -1084,7 +1056,6 @@ ${itemsList}
                     )}
                   </div>
 
-                  {/* Payment Section */}
                   <div className="tw-bg-black/50 tw-backdrop-blur-lg tw-rounded-3xl tw-p-8 tw-border-2 tw-border-yellow-500">
                     <h5 className="tw-text-2xl tw-font-bold tw-text-yellow-400 tw-mb-6 tw-text-center">
                       {form.countryCode === '+91' ? 'Secure Payment (Razorpay)' : 'International Payment (PayPal)'}
@@ -1110,7 +1081,6 @@ ${itemsList}
                     )}
                     
                     {form.countryCode === '+91' ? (
-                      // Razorpay for Indian customers
                       <button
                         onClick={startPayment}
                         disabled={!allFieldsValid() || paymentLoading || apiLoading}
@@ -1131,7 +1101,6 @@ ${itemsList}
                         )}
                       </button>
                     ) : (
-                      // PayPal for international customers
                       <div className="tw-space-y-6">
                         <button
                           onClick={startPayment}
@@ -1153,7 +1122,6 @@ ${itemsList}
                           )}
                         </button>
                         
-                        {/* PayPal buttons container - will be populated by PayPal SDK */}
                         <div id="paypal-button-container" className="tw-flex tw-justify-center"></div>
                         
                         <p className="tw-text-center tw-text-yellow-300 tw-text-sm">
