@@ -21,6 +21,7 @@ const loadRazorpay = () => {
 
 const loadPaypal = (currency = "USD") => {
   return new Promise((resolve) => {
+    // Use PayPal's sandbox client ID for testing
     const clientId = "AURJ-JxP9ks57rmAjpgygYWhay5TjDahC_6o5s89h7tu73o-UIlm7mYFSb_CSqS3u7l1TDAyQizRXLqV";
     const script = document.createElement("script");
     script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=${currency}`;
@@ -40,7 +41,7 @@ const Service = () => {
   const { t } = useLanguage();
   const [selectedService, setSelectedService] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [shippingMethod, setShippingMethod] = useState('airways');
+  const [shippingMethod, setShippingMethod] = useState('airways'); // 'airways' or 'train'
 
   const countryCodeRules = {
     '+91': { name: 'India', length: 10, api: 'india' },
@@ -69,7 +70,6 @@ const Service = () => {
   const [paypalLoaded, setPaypalLoaded] = useState(false);
   const [paypalError, setPaypalError] = useState('');
   const [apiLoading, setApiLoading] = useState(false);
-  const [debugInfo, setDebugInfo] = useState('');
 
   // Get API base URL from environment variables with fallback
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:8000";
@@ -81,8 +81,8 @@ const Service = () => {
       train: 250
     },
     international: {
-      airways: 1500,
-      ship: 800
+      airways: 1500, // Assumed price for international shipping
+      ship: 800    // Assumed price for international shipping
     }
   };
 
@@ -130,6 +130,7 @@ const Service = () => {
     const quantityOption = quantityOptions.find(q => q.value === quantityValue);
     if (!quantityOption) return 0;
 
+    // Price per kg from riceData, convert to required quantity
     const pricePerKg = riceItem.price_inr;
     return pricePerKg * quantityOption.kg;
   };
@@ -165,34 +166,35 @@ const Service = () => {
       switch (form.countryCode) {
         case '+1': // USA/Canada
           currency = "USD";
-          amount = totalAmount * 0.012;
+          amount = totalAmount * 0.012; // Convert INR to USD
           break;
         case '+44': // UK
           currency = "GBP";
-          amount = totalAmount * 0.009;
+          amount = totalAmount * 0.009; // Convert INR to GBP
           break;
         case '+971': // UAE
           currency = "AED";
-          amount = totalAmount * 0.044;
+          amount = totalAmount * 0.044; // Convert INR to AED
           break;
         case '+966': // Saudi Arabia
           currency = "SAR";
-          amount = totalAmount * 0.045;
+          amount = totalAmount * 0.045; // Convert INR to SAR
           break;
         case '+81': // Japan
           currency = "JPY";
-          amount = totalAmount * 1.8;
+          amount = totalAmount * 1.8; // Convert INR to JPY
           break;
         case '+49': // Germany
         case '+33': // France
           currency = "EUR";
-          amount = totalAmount * 0.011;
+          amount = totalAmount * 0.011; // Convert INR to EUR
           break;
         case '+86': // China
           currency = "CNY";
-          amount = totalAmount * 0.085;
+          amount = totalAmount * 0.085; // Convert INR to CNY
           break;
         default:
+          // For other countries, use USD as default
           currency = "USD";
           amount = totalAmount * 0.012;
       }
@@ -200,7 +202,7 @@ const Service = () => {
 
     return {
       currency,
-      amount: Math.round(amount * 100) / 100,
+      amount: Math.round(amount * 100) / 100, // Round to 2 decimal places
       amountINR: totalAmount
     };
   };
@@ -243,29 +245,171 @@ const Service = () => {
     }
   };
 
-  // Test backend connection
-  const testBackendConnection = async () => {
-    try {
-      setDebugInfo('Testing backend connection...');
-      const response = await fetch(`${API_BASE_URL}/`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (response.ok) {
-        const data = await response.text();
-        setDebugInfo(`Backend connection successful: ${data}`);
-        return true;
-      } else {
-        setDebugInfo(`Backend connection failed: ${response.status} ${response.statusText}`);
-        return false;
-      }
-    } catch (error) {
-      setDebugInfo(`Backend connection error: ${error.message}`);
-      return false;
+  const handlePincodeFetch = async (e) => {
+    let pincode = e.target.value.trim();
+    if (!pincode || pincode.length < 3) return;
+
+    const country = countryCodeRules[form.countryCode];
+    if (country.api === 'manual') {
+      setPincodeMessage(`Manual entry required for ${country.name}`);
+      return;
     }
+
+    setPincodeLoading(true);
+    setPincodeMessage('');
+
+    try {
+      let url = '';
+      let parser = null;
+      let apiPincode = pincode;
+
+      if (country.api === 'india') {
+        apiPincode = pincode.replace(/\D/g, '');
+        if (apiPincode.length !== 6) throw new Error("Invalid Indian pincode");
+        url = `https://api.postalpincode.in/pincode/${apiPincode}`;
+        parser = (data) => {
+          if (data[0]?.Status === "Success" && data[0]?.PostOffice?.length > 0) {
+            const po = data[0].PostOffice[0];
+            return {
+              area: '',
+              town: po.Block || po.District || '',
+              city: po.District || '',
+              district: po.District || ''
+            };
+          }
+          return null;
+        };
+      }
+      else if (country.api === 'usa_canada') {
+        apiPincode = pincode.replace(/\D/g, '');
+        if (apiPincode.length < 5) throw new Error("Invalid US/Canada zipcode");
+
+        const countryCode = form.countryCode === '+1' ? 'us' : 'ca';
+        url = `https://api.zippopotam.us/${countryCode}/${apiPincode}`;
+        parser = (data) => {
+          if (data.places?.length > 0) {
+            const p = data.places[0];
+            return {
+              area: '',
+              town: p['place name'] || '',
+              city: p['place name'] || '',
+              district: p.state || p['state abbreviation'] || ''
+            };
+          }
+          return null;
+        };
+      }
+      else if (country.api === 'uk') {
+        apiPincode = pincode.replace(/\s/g, '').toUpperCase();
+        if (apiPincode.length < 5) throw new Error("Invalid UK postcode");
+
+        url = `https://api.postcodes.io/postcodes/${apiPincode}`;
+        parser = (data) => {
+          if (data.status === 200 && data.result) {
+            return {
+              area: '',
+              town: data.result.admin_district || data.result.region || '',
+              city: data.result.admin_district || data.result.region || '',
+              district: data.result.region || data.result.country || ''
+            };
+          }
+          return null;
+        };
+      }
+
+      if (!url) {
+        throw new Error("API not configured for this country");
+      }
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        if (country.api === 'usa_canada') {
+          const zipCodeApiUrl = `https://api.zippopotam.us/us/${apiPincode}`;
+          const fallbackResponse = await fetch(zipCodeApiUrl);
+          if (fallbackResponse.ok) {
+            const fallbackData = await fallbackResponse.json();
+            const result = parser(fallbackData);
+            if (result) {
+              setForm(prev => ({
+                ...prev,
+                town: result.town || prev.town,
+                city: result.city || prev.city,
+                district: result.district || prev.district,
+              }));
+              setPincodeMessage(`Location found: ${result.city || result.town}, ${country.name}`);
+              return;
+            }
+          }
+        }
+        throw new Error("Not found");
+      }
+
+      const data = await response.json();
+      const result = parser(data);
+
+      if (result) {
+        setForm(prev => ({
+          ...prev,
+          town: result.town || prev.town,
+          city: result.city || prev.city,
+          district: result.district || prev.district,
+        }));
+        setPincodeMessage(`Location found: ${result.city || result.town}, ${country.name}`);
+      } else {
+        setPincodeMessage(`No data found for "${pincode}". Enter manually.`);
+      }
+    } catch (err) {
+      console.error('Pincode fetch error:', err);
+
+      if (err.message.includes('Invalid')) {
+        setPincodeMessage(`Invalid format for ${country.name}`);
+      } else if (err.message.includes('Not found')) {
+        setPincodeMessage(`No data found for "${pincode}". Enter manually.`);
+      } else if (err.message.includes('API not configured')) {
+        setPincodeMessage(`Manual entry required for ${country.name}`);
+      } else {
+        setPincodeMessage(`Service temporarily unavailable. Enter manually.`);
+      }
+    } finally {
+      setPincodeLoading(false);
+    }
+  };
+
+  const toggleItem = (variety, grade) => {
+    setForm(prev => {
+      const key = `${variety}-${grade}`;
+      const exists = prev.selectedItems.find(i => i.key === key);
+      if (exists) {
+        return { ...prev, selectedItems: prev.selectedItems.filter(i => i.key !== key) };
+      } else {
+        return { 
+          ...prev, 
+          selectedItems: [...prev.selectedItems, { 
+            variety, 
+            grade, 
+            quantity: "1 kg", 
+            key,
+            price: calculateItemPrice(variety, grade, "1 kg")
+          }] 
+        };
+      }
+    });
+  };
+
+  const updateQuantity = (key, newQuantity) => {
+    setForm(prev => ({
+      ...prev,
+      selectedItems: prev.selectedItems.map(item => {
+        if (item.key === key) {
+          return { 
+            ...item, 
+            quantity: newQuantity,
+            price: calculateItemPrice(item.variety, item.grade, newQuantity)
+          };
+        }
+        return item;
+      })
+    }));
   };
 
   const sendToWhatsApp = (currency = "INR", amount = null, paymentMethod = "Razorpay") => {
@@ -337,45 +481,8 @@ ${itemsList}
       form.selectedItems.length > 0;
   };
 
-  // Create Razorpay order with fallback
-  const createRazorpayOrder = async (amount, currency) => {
-    try {
-      setDebugInfo(`Creating order with: ${API_BASE_URL}/create-razorpay-order`);
-      
-      const response = await fetch(`${API_BASE_URL}/create-razorpay-order`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        body: JSON.stringify({ 
-          amount: Math.round(amount),
-          currency: currency
-        })
-      });
-
-      setDebugInfo(`Response status: ${response.status}`);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-
-      const data = await response.json();
-      setDebugInfo(`Order created successfully: ${data.order?.id}`);
-      
-      if (!data.order || !data.order.id) {
-        throw new Error("Invalid order response from server");
-      }
-      
-      return data.order;
-    } catch (error) {
-      setDebugInfo(`Order creation failed: ${error.message}`);
-      throw error;
-    }
-  };
-
   const startRazorpayPayment = async () => {
+    // Validate form before payment
     setForm(prev => ({ ...prev, submitted: true }));
 
     if (!allFieldsValid()) {
@@ -385,39 +492,79 @@ ${itemsList}
 
     setPaymentLoading(true);
     setApiLoading(true);
-    setDebugInfo('Starting payment process...');
 
     try {
-      // Test backend first
-      const connectionOk = await testBackendConnection();
-      if (!connectionOk) {
-        throw new Error("Cannot connect to payment server. Please try again later.");
-      }
-
       const res = await loadRazorpay();
       if (!res) {
-        throw new Error("Razorpay SDK failed to load");
+        alert("Razorpay SDK failed to load");
+        return;
       }
 
       const totalAmount = calculateTotalAmount();
       
+      // Determine currency based on country
       let currency = "INR";
       let amount = totalAmount;
       
+      // Convert to local currency for international customers
       if (form.countryCode !== '+91') {
         switch (form.countryCode) {
-          case '+1': currency = "USD"; amount = totalAmount * 0.012; break;
-          case '+44': currency = "GBP"; amount = totalAmount * 0.009; break;
-          case '+971': currency = "AED"; amount = totalAmount * 0.044; break;
-          case '+966': currency = "SAR"; amount = totalAmount * 0.045; break;
-          case '+81': currency = "JPY"; amount = totalAmount * 1.8; break;
-          case '+49': case '+33': currency = "EUR"; amount = totalAmount * 0.011; break;
-          case '+86': currency = "CNY"; amount = totalAmount * 0.085; break;
-          default: currency = "USD"; amount = totalAmount * 0.012;
+          case '+1': // USA/Canada
+            currency = "USD";
+            amount = totalAmount * 0.012; // Convert INR to USD
+            break;
+          case '+44': // UK
+            currency = "GBP";
+            amount = totalAmount * 0.009; // Convert INR to GBP
+            break;
+          case '+971': // UAE
+            currency = "AED";
+            amount = totalAmount * 0.044; // Convert INR to AED
+            break;
+          case '+966': // Saudi Arabia
+            currency = "SAR";
+            amount = totalAmount * 0.045; // Convert INR to SAR
+            break;
+          case '+81': // Japan
+            currency = "JPY";
+            amount = totalAmount * 1.8; // Convert INR to JPY
+            break;
+          case '+49': // Germany
+          case '+33': // France
+            currency = "EUR";
+            amount = totalAmount * 0.011; // Convert INR to EUR
+            break;
+          case '+86': // China
+            currency = "CNY";
+            amount = totalAmount * 0.085; // Convert INR to CNY
+            break;
+          default:
+            // For other countries, use USD as default
+            currency = "USD";
+            amount = totalAmount * 0.012;
         }
       }
 
-      const order = await createRazorpayOrder(amount, currency);
+      const orderRes = await fetch(`${API_BASE_URL}/create-razorpay-order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          amount: Math.round(amount),
+          currency: currency
+        })
+      });
+
+      if (!orderRes.ok) {
+        throw new Error(`Failed to create order: ${orderRes.status} ${orderRes.statusText}`);
+      }
+
+      const data = await orderRes.json();
+      
+      if (!data.order || !data.order.id) {
+        throw new Error("Invalid order response from server");
+      }
+      
+      const order = data.order;
 
       const options = {
         key: "rzp_test_RfSBzDny9nssx0",
@@ -427,9 +574,10 @@ ${itemsList}
         description: "Rice Sample Courier Service Payment",
         order_id: order.id,
         handler: function (response) {
-          setDebugInfo(`Payment successful: ${response.razorpay_payment_id}`);
+          // Payment successful - send to WhatsApp
           const success = sendToWhatsApp(currency, amount, "Razorpay");
           if (success) {
+            // Reset form after successful submission
             setForm({
               name: '', company: '', doorNo: '', area: '', town: '', city: '', district: '', pincode: '', landmark: '',
               phone: '', email: '', countryCode: '+91', selectedItems: [], submitted: false
@@ -448,7 +596,6 @@ ${itemsList}
           ondismiss: function() {
             setPaymentLoading(false);
             setApiLoading(false);
-            setDebugInfo('Payment modal dismissed');
           }
         }
       };
@@ -458,9 +605,9 @@ ${itemsList}
       
     } catch (error) {
       console.error('Payment error:', error);
-      setDebugInfo(`Payment error: ${error.message}`);
       
-      if (error.message.includes('Failed to fetch') || error.message.includes('Cannot connect')) {
+      // More specific error messages
+      if (error.message.includes('Failed to fetch')) {
         alert("Cannot connect to payment server. Please check your internet connection or try again later.");
       } else if (error.message.includes('Failed to create order')) {
         alert("Payment service is temporarily unavailable. Please try again in a few minutes.");
@@ -474,6 +621,7 @@ ${itemsList}
   };
 
   const startPaypalPayment = async () => {
+    // Validate form before payment
     setForm(prev => ({ ...prev, submitted: true }));
 
     if (!allFieldsValid()) {
@@ -487,22 +635,30 @@ ${itemsList}
     try {
       const { currency, amount } = convertToLocalCurrency(calculateTotalAmount());
       
+      // Load PayPal SDK with the correct currency
       const loaded = await loadPaypal(currency);
       if (!loaded) {
-        throw new Error("PayPal SDK failed to load");
+        setPaypalError("PayPal SDK failed to load. Please try again or use another payment method.");
+        setPaymentLoading(false);
+        return;
       }
 
       setPaypalLoaded(true);
 
+      // Clear any existing PayPal buttons
       const paypalButtonsContainer = document.getElementById('paypal-button-container');
       if (paypalButtonsContainer) {
         paypalButtonsContainer.innerHTML = '';
       }
 
+      // Check if PayPal is available
       if (!window.paypal) {
-        throw new Error("PayPal is not available");
+        setPaypalError("PayPal is not available. Please try again later.");
+        setPaymentLoading(false);
+        return;
       }
 
+      // Render PayPal buttons
       window.paypal.Buttons({
         createOrder: function(data, actions) {
           return actions.order.create({
@@ -517,8 +673,10 @@ ${itemsList}
         },
         onApprove: function(data, actions) {
           return actions.order.capture().then(function(details) {
+            // Payment successful - send to WhatsApp
             const success = sendToWhatsApp(currency, `${amount.toFixed(2)} ${currency}`, "PayPal");
             if (success) {
+              // Reset form after successful submission
               setForm({
                 name: '', company: '', doorNo: '', area: '', town: '', city: '', district: '', pincode: '', landmark: '',
                 phone: '', email: '', countryCode: '+91', selectedItems: [], submitted: false
@@ -540,15 +698,17 @@ ${itemsList}
 
     } catch (error) {
       console.error('PayPal payment error:', error);
-      setPaypalError(`PayPal failed: ${error.message}`);
+      setPaypalError("Payment failed. Please try again.");
       setPaymentLoading(false);
     }
   };
 
   const startPayment = () => {
     if (form.countryCode === '+91') {
+      // Indian customer - use Razorpay
       startRazorpayPayment();
     } else {
+      // International customer - use PayPal
       startPaypalPayment();
     }
   };
@@ -579,12 +739,12 @@ ${itemsList}
       setPincodeLoading(false);
       setPincodeMessage('');
       setPaypalError('');
-      setDebugInfo('');
     }
   };
 
   const showForm = selectedService === "Sample Courier Services";
 
+  // Get payment button text based on country
   const getPaymentButtonText = () => {
     const totalAmount = calculateTotalAmount();
     if (form.countryCode === '+91') {
@@ -595,6 +755,7 @@ ${itemsList}
     }
   };
 
+  // Fallback payment method for when PayPal fails
   const handleFallbackPayment = () => {
     if (form.countryCode === '+91') {
       startRazorpayPayment();
@@ -603,7 +764,6 @@ ${itemsList}
     }
   };
 
-  // Rest of your existing JSX remains the same, but I'll add a debug section
   return (
     <>
       <section className="service-section">
@@ -704,18 +864,225 @@ ${itemsList}
                   Request Multiple Rice Samples
                 </h4>
 
-                {/* Debug Section - Only show in development */}
-                {process.env.NODE_ENV === 'development' && debugInfo && (
-                  <div className="tw-mb-6 tw-p-4 tw-bg-gray-800 tw-rounded-xl tw-border tw-border-yellow-600">
-                    <h5 className="tw-text-yellow-400 tw-font-bold tw-mb-2">Debug Info:</h5>
-                    <p className="tw-text-white tw-text-sm">{debugInfo}</p>
-                    <p className="tw-text-gray-400 tw-text-xs tw-mt-2">API URL: {API_BASE_URL}</p>
-                  </div>
-                )}
-
                 <div className="tw-space-y-8">
-                  {/* Your existing form fields remain the same */}
-                  {/* ... form fields ... */}
+
+                  <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-8">
+                    <div>
+                      <input type="text" name="name" placeholder="Your Name *" value={form.name} onChange={handleInputChange}
+                        className="tw-w-full tw-px-6 tw-py-5 tw-rounded-2xl tw-bg-black/60 tw-backdrop-blur-md tw-text-yellow-100 placeholder:tw-text-yellow-500 tw-border-2 tw-border-yellow-600 focus:tw-outline-none focus:tw-ring-4 focus:tw-ring-yellow-400 tw-transition-all tw-shadow-xl" />
+                      {!form.name && form.submitted && <p className="tw-text-red-400 tw-text-sm tw-mt-2">Required</p>}
+                    </div>
+                    <div>
+                      <input type="text" name="company" placeholder="Company Name *" value={form.company} onChange={handleInputChange}
+                        className="tw-w-full tw-px-6 tw-py-5 tw-rounded-2xl tw-bg-black/60 tw-backdrop-blur-md tw-text-yellow-100 placeholder:tw-text-yellow-500 tw-border-2 tw-border-yellow-600 focus:tw-outline-none focus:tw-ring-4 focus:tw-ring-yellow-400 tw-transition-all tw-shadow-xl" />
+                      {!form.company && form.submitted && <p className="tw-text-red-400 tw-text-sm tw-mt-2">Required</p>}
+                    </div>
+                  </div>
+
+                  <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-8">
+                    <div>
+                      <div className="tw-flex tw-rounded-2xl tw-overflow-hidden tw-border-2 tw-border-yellow-600">
+                        <select name="countryCode" value={form.countryCode} onChange={handleInputChange} className="tw-px-3 tw-py-5 tw-w-32 tw-bg-black/70 tw-backdrop-blur-md tw-text-yellow-100 tw-border-r-2 tw-border-r-yellow-600 tw-outline-none tw-text-sm">
+                          {Object.keys(countryCodeRules).map(code => (
+                            <option key={code} value={code} className="tw-bg-black">
+                              {code} {countryCodeRules[code].name}
+                            </option>
+                          ))}
+                        </select>
+                        <input type="tel" name="phone" placeholder={`Enter ${currentLength} digits *`} value={form.phone} onChange={handleInputChange} maxLength={currentLength} className="tw-flex-1 tw-px-5 tw-py-5 tw-bg-black/60 tw-backdrop-blur-md tw-text-yellow-100 placeholder:tw-text-yellow-500 tw-outline-none" />
+                      </div>
+                      {phoneError && <p className="tw-text-red-400 tw-text-sm tw-mt-2">{phoneError}</p>}
+                      {!form.phone && form.submitted && <p className="tw-text-red-400 tw-text-sm tw-mt-2">Required</p>}
+                    </div>
+                    <div>
+                      <input type="email" name="email" placeholder="Email Address *" value={form.email} onChange={handleInputChange} className="tw-w-full tw-px-6 tw-py-5 tw-rounded-2xl tw-bg-black/60 tw-backdrop-blur-md tw-text-yellow-100 placeholder:tw-text-yellow-500 tw-border-2 tw-border-yellow-600 focus:tw-ring-4 focus:tw-ring-yellow-400 tw-shadow-xl" />
+                      {emailError && <p className="tw-text-red-400 tw-text-sm tw-mt-2">{emailError}</p>}
+                      {!form.email && form.submitted && <p className="tw-text-red-400 tw-text-sm tw-mt-2">Required</p>}
+                    </div>
+                  </div>
+
+                  {/* Shipping Method Selection */}
+                  <div className="tw-bg-black/50 tw-backdrop-blur-lg tw-rounded-3xl tw-p-8 tw-border-2 tw-border-yellow-600">
+                    <h5 className="tw-text-xl tw-font-bold tw-text-yellow-400 tw-mb-6 tw-text-center">Shipping Method</h5>
+                    <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-6">
+                      <div>
+                        <label className="tw-flex tw-items-center tw-space-x-4 tw-cursor-pointer">
+                          <input
+                            type="radio"
+                            name="shippingMethod"
+                            value="airways"
+                            checked={shippingMethod === 'airways'}
+                            onChange={(e) => setShippingMethod(e.target.value)}
+                            className="tw-w-5 tw-h-5 tw-text-yellow-400"
+                          />
+                          <div className="tw-flex-1">
+                            <span className="tw-text-yellow-100 tw-font-semibold tw-text-lg">Airways</span>
+                            <p className="tw-text-gray-400 tw-text-sm">
+                              {form.countryCode === '+91' ? '₹350' : '₹1500'} - Faster delivery (3-5 days)
+                            </p>
+                          </div>
+                        </label>
+                      </div>
+                      <div>
+                        <label className="tw-flex tw-items-center tw-space-x-4 tw-cursor-pointer">
+                          <input
+                            type="radio"
+                            name="shippingMethod"
+                            value="train"
+                            checked={shippingMethod === 'train'}
+                            onChange={(e) => setShippingMethod(e.target.value)}
+                            className="tw-w-5 tw-h-5 tw-text-yellow-400"
+                          />
+                          <div className="tw-flex-1">
+                            <span className="tw-text-yellow-100 tw-font-semibold tw-text-lg">Train</span>
+                            <p className="tw-text-gray-400 tw-text-sm">
+                              {form.countryCode === '+91' ? '₹250' : '₹800'} - Economical (7-10 days)
+                            </p>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="tw-bg-black/50 tw-backdrop-blur-lg tw-rounded-3xl tw-p-8 tw-border-2 tw-border-yellow-600">
+                    <h5 className="tw-text-xl tw-font-bold tw-text-yellow-400 tw-mb-6 tw-text-center">Delivery Address</h5>
+                    <div className="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 tw-gap-6">
+                      <div>
+                        <input type="text" name="doorNo" placeholder="Door No / Apt / Plot *" value={form.doorNo} onChange={handleInputChange} className="tw-w-full tw-px-5 tw-py-4 tw-rounded-xl tw-bg-black/60 tw-text-yellow-100 placeholder:tw-text-yellow-500 tw-border tw-border-yellow-700 focus:tw-ring-4 focus:tw-ring-yellow-400" />
+                        {!form.doorNo && form.submitted && <p className="tw-text-red-400 tw-text-xs tw-mt-1">Required</p>}
+                      </div>
+                      <div>
+                        <input type="text" name="area" placeholder="Area / Street / Locality *" value={form.area} onChange={handleInputChange} className="tw-w-full tw-px-5 tw-py-4 tw-rounded-xl tw-bg-black/60 tw-text-yellow-100 placeholder:tw-text-yellow-500 tw-border tw-border-yellow-700 focus:tw-ring-4 focus:tw-ring-yellow-400" />
+                        {!form.area && form.submitted && <p className="tw-text-red-400 tw-text-xs tw-mt-1">Required</p>}
+                      </div>
+                      <div>
+                        <input type="text" name="town" placeholder="Town / Suburb / Mandal *" value={form.town} onChange={handleInputChange} className="tw-w-full tw-px-5 tw-py-4 tw-rounded-xl tw-bg-black/60 tw-text-yellow-100 placeholder:tw-text-yellow-500 tw-border tw-border-yellow-700 focus:tw-ring-4 focus:tw-ring-yellow-400" />
+                        {!form.town && form.submitted && <p className="tw-text-red-400 tw-text-xs tw-mt-1">Required</p>}
+                      </div>
+                      <div>
+                        <input type="text" name="city" placeholder="City *" value={form.city} onChange={handleInputChange} className="tw-w-full tw-px-5 tw-py-4 tw-rounded-xl tw-bg-black/60 tw-text-yellow-100 placeholder:tw-text-yellow-500 tw-border tw-border-yellow-700 focus:tw-ring-4 focus:tw-ring-yellow-400" />
+                        {!form.city && form.submitted && <p className="tw-text-red-400 tw-text-xs tw-mt-1">Required</p>}
+                      </div>
+                      <div>
+                        <input type="text" name="district" placeholder="District / County *" value={form.district} onChange={handleInputChange} className="tw-w-full tw-px-5 tw-py-4 tw-rounded-xl tw-bg-black/60 tw-text-yellow-100 placeholder:tw-text-yellow-500 tw-border tw-border-yellow-700 focus:tw-ring-4 focus:tw-ring-yellow-400" />
+                        {!form.district && form.submitted && <p className="tw-text-red-400 tw-text-xs tw-mt-1">Required</p>}
+                      </div>
+                      <div>
+                        <input
+                          type="text"
+                          name="pincode"
+                          placeholder={form.countryCode === '+44' ? "Postcode (e.g. SW1A 1AA) *" : "Zip / Postal Code *"}
+                          value={form.pincode}
+                          onChange={handleInputChange}
+                          onBlur={handlePincodeFetch}
+                          maxLength="12"
+                          className="tw-w-full tw-px-5 tw-py-4 tw-rounded-xl tw-bg-black/60 tw-text-yellow-100 placeholder:tw-text-yellow-500 tw-border tw-border-yellow-700 focus:tw-ring-4 focus:tw-ring-yellow-400 tw-font-mono"
+                        />
+                        {form.pincode && form.pincode.length < 4 && form.submitted && <p className="tw-text-red-400 tw-text-xs tw-mt-1">Too short</p>}
+                        {!form.pincode && form.submitted && <p className="tw-text-red-400 tw-text-xs tw-mt-1">Required</p>}
+                        {pincodeLoading && (
+                          <div className="tw-flex tw-items-center tw-gap-2 tw-mt-2">
+                            <div className="tw-w-4 tw-h-4 tw-border-2 tw-border-yellow-400 tw-border-t-transparent tw-rounded-full tw-animate-spin"></div>
+                            <p className="tw-text-yellow-300 tw-text-xs">Searching globally...</p>
+                          </div>
+                        )}
+                        {pincodeMessage && !pincodeLoading && (
+                          <p className={`tw-text-xs tw-mt-2 ${pincodeMessage.includes('found') ? 'tw-text-green-400' : pincodeMessage.includes('Manual') ? 'tw-text-blue-400' : 'tw-text-orange-400'}`}>
+                            {pincodeMessage}
+                          </p>
+                        )}
+                      </div>
+                      <div className="sm:tw-col-span-2">
+                        <input type="text" name="landmark" placeholder="Landmark / Nearby Place (Optional)" value={form.landmark} onChange={handleInputChange} className="tw-w-full tw-px-5 tw-py-4 tw-rounded-xl tw-bg-black/60 tw-text-yellow-100 placeholder:tw-text-yellow-500 tw-border tw-border-yellow-700 focus:tw-ring-4 focus:tw-ring-yellow-400" />
+                        <p className="tw-text-gray-400 tw-text-xs tw-mt-1">Help delivery partners locate your address easily</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="tw-bg-black/50 tw-backdrop-blur-lg tw-rounded-3xl tw-p-8 tw-border-2 tw-border-yellow-500">
+                    <h5 className="tw-text-2xl tw-font-bold tw-text-yellow-400 tw-mb-8 tw-text-center">Select Samples & Quantity</h5>
+                    <div className="tw-space-y-8">
+                      {varietyOptions.map(variety => (
+                        <div key={variety} className="tw-bg-black/60 tw-backdrop-blur-md tw-rounded-2xl tw-p-6 tw-border tw-border-yellow-600">
+                          <div className="tw-font-bold tw-text-yellow-300 tw-text-xl tw-mb-6">{variety}</div>
+                          <div className="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 md:tw-grid-cols-3 lg:tw-grid-cols-4 tw-gap-6">
+                            {gradeMap[variety]?.map(grade => {
+                              const key = `${variety}-${grade}`;
+                              const item = form.selectedItems.find(i => i.key === key);
+                              const isChecked = !!item;
+                              const riceItem = riceData.find(r => r.variety === variety && r.grade === grade);
+                              const pricePerKg = riceItem ? riceItem.price_inr : 0;
+                              
+                              return (
+                                <div key={grade} className="tw-bg-black/70 tw-backdrop-blur-sm tw-rounded-xl tw-p-5 tw-border tw-border-yellow-700 hover:tw-border-yellow-400 tw-transition-all tw-flex tw-flex-col" style={{ height: '140px' }}>
+                                  <label className="tw-flex tw-items-center tw-gap-4 tw-cursor-pointer tw-mb-3 tw-min-h-10">
+                                    <div className="tw-flex-shrink-0">
+                                      <input type="checkbox" checked={isChecked} onChange={() => toggleItem(variety, grade)}
+                                        className="tw-w-7 tw-h-7 tw-text-yellow-400 tw-bg-black/50 tw-rounded-lg focus:tw-ring-4 focus:tw-ring-yellow-400 tw-border-2 tw-border-yellow-600" />
+                                    </div>
+                                    <div>
+                                      <span className="tw-text-yellow-100 tw-font-semibold tw-text-base tw-leading-tight tw-break-words">{grade}</span>
+                                      <p className="tw-text-yellow-400 tw-text-sm">₹{pricePerKg}/kg</p>
+                                    </div>
+                                  </label>
+                                  {isChecked && (
+                                    <select value={item.quantity} onChange={(e) => updateQuantity(key, e.target.value)}
+                                      className="tw-w-full tw-px-3 tw-py-2 tw-bg-black/70 tw-backdrop-blur-md tw-text-yellow-100 tw-border tw-border-yellow-600 tw-rounded-lg tw-text-sm focus:tw-ring-4 focus:tw-ring-yellow-400 tw-mt-auto">
+                                      {quantityOptions.map(q => (
+                                        <option key={q.value} value={q.value} className="tw-bg-black">
+                                          {q.label} (₹{(pricePerKg * q.kg).toFixed(2)})
+                                        </option>
+                                      ))}
+                                    </select>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {form.selectedItems.length > 0 && (
+                      <div className="tw-mt-10 tw-p-8 tw-bg-gradient-to-br tw-from-yellow-900/50 tw-to-black/70 tw-backdrop-blur-lg tw-rounded-2xl tw-border-2 tw-border-yellow-500">
+                        <p className="tw-text-2xl tw-font-bold tw-text-yellow-300 tw-mb-5">Selected: {form.selectedItems.length} Sample(s)</p>
+                        <div className="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 lg:tw-grid-cols-3 tw-gap-4">
+                          {form.selectedItems.map(item => (
+                            <div key={item.key} className="tw-text-yellow-200 tw-bg-black/60 tw-backdrop-blur tw-px-5 tw-py-3 tw-rounded-xl tw-text-center tw-border tw-border-yellow-600">
+                              <span className="tw-font-medium">{item.variety}</span> → <strong className="tw-text-yellow-400">{item.grade}</strong><br />
+                              <span className="tw-text-sm tw-text-yellow-300">{item.quantity}</span><br />
+                              <span className="tw-text-sm tw-text-green-400">₹{item.price.toFixed(2)}</span>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* Price Summary */}
+                        <div className="tw-mt-6 tw-p-6 tw-bg-black/50 tw-rounded-xl tw-border tw-border-yellow-600">
+                          <h6 className="tw-text-xl tw-font-bold tw-text-yellow-300 tw-mb-4">Price Summary</h6>
+                          <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
+                            <div className="tw-text-yellow-100">
+                              <p>Rice Total: <span className="tw-float-right">₹{calculateTotalRicePrice().toFixed(2)}</span></p>
+                              <p>Shipping ({shippingMethod}): <span className="tw-float-right">₹{calculateShippingCharges().toFixed(2)}</span></p>
+                              <hr className="tw-my-2 tw-border-yellow-600" />
+                              <p className="tw-text-lg tw-font-bold tw-text-yellow-300">
+                                Total Amount: <span className="tw-float-right">₹{calculateTotalAmount().toFixed(2)}</span>
+                              </p>
+                              {form.countryCode !== '+91' && (
+                                <>
+                                  <hr className="tw-my-2 tw-border-yellow-600" />
+                                  <p className="tw-text-sm tw-text-blue-300">
+                                    International Total: <span className="tw-float-right">
+                                      {convertToLocalCurrency(calculateTotalAmount()).amount.toFixed(2)} {convertToLocalCurrency(calculateTotalAmount()).currency}
+                                    </span>
+                                  </p>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Payment Section */}
                   <div className="tw-bg-black/50 tw-backdrop-blur-lg tw-rounded-3xl tw-p-8 tw-border-2 tw-border-yellow-500">
@@ -743,6 +1110,7 @@ ${itemsList}
                     )}
                     
                     {form.countryCode === '+91' ? (
+                      // Razorpay for Indian customers
                       <button
                         onClick={startPayment}
                         disabled={!allFieldsValid() || paymentLoading || apiLoading}
@@ -763,6 +1131,7 @@ ${itemsList}
                         )}
                       </button>
                     ) : (
+                      // PayPal for international customers
                       <div className="tw-space-y-6">
                         <button
                           onClick={startPayment}
@@ -784,6 +1153,7 @@ ${itemsList}
                           )}
                         </button>
                         
+                        {/* PayPal buttons container - will be populated by PayPal SDK */}
                         <div id="paypal-button-container" className="tw-flex tw-justify-center"></div>
                         
                         <p className="tw-text-center tw-text-yellow-300 tw-text-sm">
