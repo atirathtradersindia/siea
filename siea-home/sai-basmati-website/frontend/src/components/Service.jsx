@@ -69,6 +69,10 @@ const Service = () => {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paypalLoaded, setPaypalLoaded] = useState(false);
   const [paypalError, setPaypalError] = useState('');
+  const [apiLoading, setApiLoading] = useState(false);
+
+  // Get API base URL from environment variables with fallback
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:8000";
 
   // Shipping charges
   const shippingCharges = {
@@ -487,6 +491,7 @@ ${itemsList}
     }
 
     setPaymentLoading(true);
+    setApiLoading(true);
 
     try {
       const res = await loadRazorpay();
@@ -540,7 +545,7 @@ ${itemsList}
         }
       }
 
-      const orderRes = await fetch("http://127.0.0.1:8000/create-razorpay-order", {
+      const orderRes = await fetch(`${API_BASE_URL}/create-razorpay-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -550,10 +555,15 @@ ${itemsList}
       });
 
       if (!orderRes.ok) {
-        throw new Error("Failed to create order");
+        throw new Error(`Failed to create order: ${orderRes.status} ${orderRes.statusText}`);
       }
 
       const data = await orderRes.json();
+      
+      if (!data.order || !data.order.id) {
+        throw new Error("Invalid order response from server");
+      }
+      
       const order = data.order;
 
       const options = {
@@ -585,6 +595,7 @@ ${itemsList}
         modal: {
           ondismiss: function() {
             setPaymentLoading(false);
+            setApiLoading(false);
           }
         }
       };
@@ -594,9 +605,18 @@ ${itemsList}
       
     } catch (error) {
       console.error('Payment error:', error);
-      alert("Payment failed. Please try again.");
+      
+      // More specific error messages
+      if (error.message.includes('Failed to fetch')) {
+        alert("Cannot connect to payment server. Please check your internet connection or try again later.");
+      } else if (error.message.includes('Failed to create order')) {
+        alert("Payment service is temporarily unavailable. Please try again in a few minutes.");
+      } else {
+        alert(`Payment failed: ${error.message}`);
+      }
     } finally {
       setPaymentLoading(false);
+      setApiLoading(false);
     }
   };
 
@@ -1070,6 +1090,13 @@ ${itemsList}
                       {form.countryCode === '+91' ? 'Secure Payment (Razorpay)' : 'International Payment (PayPal)'}
                     </h5>
                     
+                    {apiLoading && (
+                      <div className="tw-flex tw-items-center tw-justify-center tw-mb-4">
+                        <div className="tw-w-6 tw-h-6 tw-border-2 tw-border-yellow-400 tw-border-t-transparent tw-rounded-full tw-animate-spin"></div>
+                        <span className="tw-ml-2 tw-text-yellow-400">Creating order...</span>
+                      </div>
+                    )}
+                    
                     {paypalError && (
                       <div className="tw-mb-6 tw-p-4 tw-bg-red-900/50 tw-border tw-border-red-600 tw-rounded-xl">
                         <p className="tw-text-red-300 tw-text-center">{paypalError}</p>
@@ -1086,7 +1113,7 @@ ${itemsList}
                       // Razorpay for Indian customers
                       <button
                         onClick={startPayment}
-                        disabled={!allFieldsValid() || paymentLoading}
+                        disabled={!allFieldsValid() || paymentLoading || apiLoading}
                         className="tw-w-full tw-max-w-2xl tw-mx-auto tw-py-6 tw-bg-green-500 hover:tw-bg-green-600 tw-text-white tw-font-extrabold tw-text-2xl tw-rounded-2xl tw-flex tw-items-center tw-justify-center tw-gap-4 tw-shadow-2xl tw-transition-all tw-duration-300 transform hover:tw-scale-105 disabled:tw-opacity-50 disabled:tw-cursor-not-allowed"
                       >
                         {paymentLoading ? (
