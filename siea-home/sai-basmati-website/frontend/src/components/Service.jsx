@@ -21,7 +21,7 @@ const loadRazorpay = () => {
 
 const loadPaypal = (currency = "USD") => {
   return new Promise((resolve) => {
-    const clientId = process.env.REACT_APP_PAYPAL_CLIENT_ID || "AURJ-JxP9ks57rmAjpgygYWhay5TjDahC_6o5s89h7tu73o-UIlm7mYFSb_CSqS3u7l1TDAyQizRXLqV";
+    const clientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || "AURJ-JxP9ks57rmAjpgygYWhay5TjDahC_6o5s89h7tu73o-UIlm7mYFSb_CSqS3u7l1TDAyQizRXLqV";
     const script = document.createElement("script");
     script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=${currency}`;
     script.onload = () => {
@@ -70,7 +70,7 @@ const Service = () => {
   const [paypalError, setPaypalError] = useState('');
   const [apiLoading, setApiLoading] = useState(false);
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "https://siea.onrender.com";
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "https://siea.onrender.com";
 
   const shippingCharges = {
     india: {
@@ -415,7 +415,7 @@ const Service = () => {
     }
 
     const fullPhone = form.countryCode + form.phone;
-    const whatsappNumber = process.env.REACT_APP_WHATSAPP_NUMBER || '919247485871';
+    const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '919247485871';
     const address = `${form.doorNo}, ${form.area}, ${form.town}, ${form.city}, ${form.district} - ${form.pincode}${form.landmark ? ` (Landmark: ${form.landmark})` : ''}`;
 
     const itemsList = form.selectedItems.map((item, i) =>
@@ -555,10 +555,10 @@ ${itemsList}
       const order = data.order;
 
       const options = {
-        key: process.env.REACT_APP_RAZORPAY_KEY_ID || "rzp_test_RfSBzDny9nssx0",
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_RfSBzDny9nssx0",
         amount: order.amount,
         currency: order.currency,
-        name: process.env.REACT_APP_COMPANY_NAME || "Sai Import Export Agro",
+        name: import.meta.env.VITE_COMPANY_NAME || "Sai Import Export Agro",
         description: "Rice Sample Courier Service Payment",
         order_id: order.id,
         handler: function (response) {
