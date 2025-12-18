@@ -1,0 +1,162 @@
+.mobile-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.form-box {
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  color: #fbbf24;
+}
+
+.logo {
+  width: 70px;
+  height: 70px;
+  margin: 0 auto 15px;
+  object-fit: contain;
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  text-align: left;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.input-group label {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.input-group input,
+.input-group select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #fbbf24;
+  background-color: #111;
+  color: white;
+  font-size: 16px;
+}
+
+/* Phone inputs */
+.phone-input {
+  display: flex;
+  gap: 8px;
+}
+
+.phone-input select {
+  width: 30%;
+}
+
+.phone-input input {
+  width: 70%;
+}
+
+/* Address section */
+.address-section-title {
+  font-size: 1rem;
+  font-weight: bold;
+  margin-top: 10px;
+  color: #fbbf24;
+}
+
+.address-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.address-group input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #fbbf24;
+  background-color: #111;
+  color: white;
+  font-size: 16px;
+}
+
+/* pincode small box */
+.pincode-input {
+  max-width: 200px;
+}
+
+/* Error text */
+.error-text {
+  color: #f87171;
+  font-size: 0.8rem;
+  margin-top: 5px;
+}
+
+.login-link {
+  margin-top: 20px;
+  font-size: 0.9rem;
+}
+
+.login-link a {
+  color: #fbbf24;
+  text-decoration: none;
+}
+
+.login-link a:hover {
+  text-decoration: underline;
+}
+
+/* Button */
+.submit-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 8px;
+  background-color: #fbbf24;
+  color: black;
+  font-weight: bold;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background-color: #f59e0b;
+}
+
+/* Mobile responsive */
+@media (max-width: 340px) {
+  .form-box {
+    padding: 15px;
+  }
+  .phone-input {
+    flex-direction: column;
+  }
+  .phone-input select,
+  .phone-input input {
+    width: 100%;
+  }
+  .pincode-input {
+    max-width: 100%;
+  }
+}

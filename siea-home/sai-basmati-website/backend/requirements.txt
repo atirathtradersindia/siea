@@ -1,0 +1,15 @@
+# fastapi
+# uvicorn
+# httpx
+# feedparser
+# paypalrestsdk
+# firebase_admin
+
+fastapi
+uvicorn[standard]
+feedparser
+httpx
+razorpay
+firebase-admin
+pydantic
+python-dotenv  # optional if you want to load .env
