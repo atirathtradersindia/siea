@@ -5,12 +5,20 @@ export default function Contact() {
   const { t } = useLanguage();
 
   return (
-    <div className="tw-container tw-mx-auto tw-px-4 tw-py-16 tw-min-h-screen tw-flex tw-flex-col tw-justify-center">
-      <h1 className="tw-text-5xl sm:tw-text-6xl tw-font-extrabold tw-text-center tw-text-yellow-400 tw-mb-12 tw-tracking-tight">
+    <div className="tw-container tw-mx-auto tw-px-4 sm:tw-px-6 
+                tw-py-8 sm:tw-py-12 
+                lg:tw-min-h-screen 
+                tw-flex tw-flex-col tw-justify-center">
+      <h1 className="tw-text-2xl sm:tw-text-3xl lg:tw-text-5xl 
+               tw-font-extrabold tw-text-center 
+               tw-text-yellow-400 
+               tw-mb-6 sm:tw-mb-10 
+               tw-tracking-tight">
         {t("contact_us")}
       </h1>
 
-      <div className="tw-max-w-2xl tw-mx-auto tw-bg-black/50 tw-backdrop-blur-lg tw-p-10 tw-rounded-2xl tw-shadow-2xl tw-text-white tw-border tw-border-yellow-500/20">
+      <div className="tw-max-w-full sm:tw-max-w-xl lg:tw-max-w-2xl tw-mx-auto tw-bg-black/50 tw-backdrop-blur-lg
+      tw-p-5 sm:tw-p-8 lg:tw-p-10 tw-rounded-2xl tw-shadow-2xl tw-text-white tw-border tw-border-yellow-500/20">
         <div className="tw-space-y-8">
           <div>
             <h2 className="tw-text-2xl sm:tw-text-3xl tw-font-bold tw-text-yellow-400 tw-mb-3">

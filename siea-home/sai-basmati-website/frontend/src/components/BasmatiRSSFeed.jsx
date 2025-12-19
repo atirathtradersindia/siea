@@ -158,16 +158,16 @@ const BasmatiRSSFeed = () => {
     return titles[Math.floor(Math.random() * titles.length)];
   };
 
-  const getTypeIcon = (type) => {
-    switch (type) {
-      case 'price': return '💰';
-      case 'trade': return '🚢';
-      case 'innovation': return '🔬';
-      case 'weather': return '🌤️';
-      case 'policy': return '📜';
-      default: return '📰';
-    }
-  };
+  // const getTypeIcon = (type) => {
+  //   switch (type) {
+  //     case 'price': return '💰';
+  //     case 'trade': return '🚢';
+  //     case 'innovation': return '🔬';
+  //     case 'weather': return '🌤️';
+  //     case 'policy': return '📜';
+  //     default: return '📰';
+  //   }
+  // };
 
   const getTypeColor = (type) => {
     switch (type) {
@@ -180,23 +180,23 @@ const BasmatiRSSFeed = () => {
     }
   };
 
-  const getTrendColor = () => {
-    switch (marketTrend) {
-      case 'up': return 'text-green-400';
-      case 'down': return 'text-red-400';
-      case 'stable': return 'text-yellow-400';
-      default: return 'text-yellow-300';
-    }
-  };
+  // const getTrendColor = () => {
+  //   switch (marketTrend) {
+  //     case 'up': return 'text-green-400';
+  //     case 'down': return 'text-red-400';
+  //     case 'stable': return 'text-yellow-400';
+  //     default: return 'text-yellow-300';
+  //   }
+  // };
 
-  const getTrendIcon = () => {
-    switch (marketTrend) {
-      case 'up': return '📈';
-      case 'down': return '📉';
-      case 'stable': return '➡️';
-      default: return '📊';
-    }
-  };
+  // const getTrendIcon = () => {
+  //   switch (marketTrend) {
+  //     case 'up': return '📈';
+  //     case 'down': return '📉';
+  //     case 'stable': return '➡️';
+  //     default: return '📊';
+  //   }
+  // };
 
   return (
     <div className="w-full h-16 bg-gradient-to-r from-black to-gray-900 border-b-2 border-yellow-600 shadow-lg z-30 overflow-hidden fixed top-14">
@@ -232,7 +232,7 @@ const BasmatiRSSFeed = () => {
                 onClick={() => handleFeedClick(feed)}
               >
                 <span className={`text-lg ${getTypeColor(feed.type)}`}>
-                  {getTypeIcon(feed.type)}
+                  {/* {getTypeIcon(feed.type)} */}
                 </span>
                 <strong className={`font-semibold ${feed.link && feed.link !== "#"
                   ? 'text-yellow-100 group-hover:text-yellow-200'
@@ -240,12 +240,12 @@ const BasmatiRSSFeed = () => {
                   }`}>
                   {feed.title}
                 </strong>
-                <span className="text-yellow-300 text-xs font-medium bg-yellow-900/30 px-2 py-1 rounded border border-yellow-500/30">
+                {/* <span className="text-yellow-300 text-xs font-medium bg-yellow-900/30 px-2 py-1 rounded border border-yellow-500/30">
                   {feed.source}
-                </span>
-                {feed.link && feed.link !== "#" && (
+                </span> */}
+                {/* {feed.link && feed.link !== "#" && (
                   <ExternalLink size={12} className="text-yellow-300 opacity-70" />
-                )}
+                )} */}
               </div>
             ))}
           </div>

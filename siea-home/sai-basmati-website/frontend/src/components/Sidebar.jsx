@@ -14,7 +14,13 @@ const Sidebar = ({ filteredCategory, setFilteredCategory, isOpen, toggleSidebar 
         className="sidebar-toggle-btn"
         onClick={toggleSidebar}
         aria-label="Toggle sidebar"
-        style={{ top: isOpen ? '1rem' : '4.5rem' }}
+        style={{
+          top: isOpen
+            ? '1rem'
+            : window.innerWidth < 640
+              ? '6.5rem'
+              : '4.5rem'
+        }}
       >
         {isOpen ? '✕' : '=>'}
       </button>

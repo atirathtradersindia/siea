@@ -3,13 +3,18 @@ import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { ref, onValue, update } from "firebase/database";
 // import { db as dbQuote } from "../../firebasequote";
-import { db  } from "../../firebase";
+import { db } from "../../firebase";
 
 export default function Orders() {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState("all");
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const notifyAdminModal = (open) => {
+    window.dispatchEvent(new CustomEvent("admin-modal", { detail: open }));
+  };
+
 
   // View / Update state
   const [showViewModal, setShowViewModal] = useState(false);
@@ -30,6 +35,8 @@ export default function Orders() {
       setActiveTab("bulk");
     }
   }, [location]);
+
+
 
   // Subscribe to both bulk and sample_courier nodes
   useEffect(() => {
@@ -118,6 +125,7 @@ export default function Orders() {
   const handleOpenView = (order) => {
     setViewingOrder(order);
     setShowViewModal(true);
+    notifyAdminModal(true);
   };
 
   const handleOpenUpdate = (order) => {
@@ -125,6 +133,13 @@ export default function Orders() {
     setUpdateStatus(order.status || "Pending");
     setShowViewModal(false);
     setShowUpdateModal(true);
+    notifyAdminModal(true);
+  };
+  const closeAllModals = () => {
+    setShowViewModal(false);
+    setShowUpdateModal(false);
+    setViewingOrder(null);
+    notifyAdminModal(false);  // ✅ IMPORTANT
   };
 
   // Determines correct DB path for update
@@ -332,7 +347,12 @@ export default function Orders() {
                 <p className="tw-text-gray-400 tw-text-sm mt-1">Order ID: <span className="tw-font-mono tw-text-white">{viewingOrder.id}</span></p>
               </div>
               <div>
-                <button onClick={() => setShowViewModal(false)} className="tw-text-gray-400 hover:tw-text-white tw-text-3xl">&times;</button>
+                <button
+                  onClick={closeAllModals}
+                  className="tw-text-gray-400 hover:tw-text-white tw-text-3xl"
+                >
+                  &times;
+                </button>
               </div>
             </div>
 
@@ -453,8 +473,18 @@ export default function Orders() {
               )}
 
               <div className="tw-flex tw-justify-end tw-gap-4 tw-pt-4">
-                <button onClick={() => { setShowViewModal(false); handleOpenUpdate(viewingOrder); }} className="tw-bg-yellow-500 hover:tw-bg-yellow-600 tw-text-black tw-px-6 tw-py-2 tw-rounded-lg">Update Status</button>
-                <button onClick={() => setShowViewModal(false)} className="tw-bg-gray-800 hover:tw-bg-gray-700 tw-text-white tw-px-6 tw-py-2 tw-rounded-lg">Close</button>
+<button
+  onClick={() => handleOpenUpdate(viewingOrder)}
+  className="tw-bg-yellow-500 hover:tw-bg-yellow-600 tw-text-black tw-px-6 tw-py-2 tw-rounded-lg"
+>
+  Update Status
+</button>
+                <button
+                  onClick={closeAllModals}
+                  className="tw-bg-gray-800 hover:tw-bg-gray-700 tw-text-white tw-px-6 tw-py-2 tw-rounded-lg"
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>
@@ -467,7 +497,12 @@ export default function Orders() {
           <div className="tw-bg-gray-900 tw-rounded-xl tw-w-full tw-max-w-md tw-p-6">
             <div className="tw-flex tw-justify-between tw-items-center tw-mb-4">
               <h2 className="tw-text-2xl tw-font-bold tw-text-yellow-500">Update Quote Status</h2>
-              <button onClick={() => setShowUpdateModal(false)} className="tw-text-gray-400 hover:tw-text-white tw-text-2xl">&times;</button>
+              <button
+                onClick={closeAllModals}
+                className="tw-text-gray-400 hover:tw-text-white tw-text-3xl"
+              >
+                &times;
+              </button>
             </div>
 
             <p className="tw-text-gray-300 tw-mb-4">Quote ID: <span className="tw-font-mono">{viewingOrder.id}</span></p>
@@ -485,7 +520,13 @@ export default function Orders() {
             </div>
 
             <div className="tw-flex tw-justify-end tw-gap-3">
-              <button onClick={() => setShowUpdateModal(false)} className="tw-bg-gray-800 hover:tw-bg-gray-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-lg" disabled={updating}>Cancel</button>
+<button
+  onClick={closeAllModals}
+  className="tw-bg-gray-800 hover:tw-bg-gray-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-lg"
+  disabled={updating}
+>
+  Cancel
+</button>
               <button onClick={handleStatusUpdate} className="tw-bg-yellow-500 hover:tw-bg-yellow-600 tw-text-black tw-px-6 tw-py-2 tw-rounded-lg" disabled={updating || !updateStatus}>
                 {updating ? "Updating..." : "Update Status"}
               </button>

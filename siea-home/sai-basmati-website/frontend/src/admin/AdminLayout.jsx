@@ -1,11 +1,53 @@
 // src/admin/AdminLayout.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
 
 export default function AdminLayout() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = (e) => {
+      const admin = document.getElementById("admin-scroll-container");
+
+      if (e.detail === true) {
+        // lock everything
+        document.documentElement.style.overflow = "hidden";
+        document.body.style.overflow = "hidden";
+
+        if (admin) {
+          admin.style.overflowY = "hidden";
+          admin.style.height = "100vh";
+        }
+      } else {
+        // unlock
+        document.documentElement.style.overflow = "";
+        document.body.style.overflow = "";
+
+        if (admin) {
+          admin.style.overflowY = "";
+          admin.style.height = "";
+        }
+      }
+    };
+
+    window.addEventListener("admin-modal", handler);
+
+    return () => {
+      window.removeEventListener("admin-modal", handler);
+
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+
+      const admin = document.getElementById("admin-scroll-container");
+      if (admin) {
+        admin.style.overflowY = "";
+        admin.style.height = "";
+      }
+    };
+  }, []);
+
 
   const handleLogout = () => {
     localStorage.removeItem("isAdmin");
@@ -50,13 +92,15 @@ export default function AdminLayout() {
       {/* Main content area */}
       <div className="tw-flex-1 tw-w-full">
         <div
+          id="admin-scroll-container"
           className="
-            tw-p-4 sm:tw-p-6 md:tw-p-8 lg:tw-p-6 xl:tw-p-8
-            tw-bg-gradient-to-b tw-from-black tw-to-gray-900
-            tw-min-h-screen tw-text-white
-            tw-overflow-x-hidden
-          "
+          tw-p-4 sm:tw-p-6 md:tw-p-8 lg:tw-p-6 xl:tw-p-8
+          tw-bg-gradient-to-b tw-from-black tw-to-gray-900
+          tw-min-h-screen tw-text-white
+          tw-overflow-x-hidden"
         >
+
+
           <div className="tw-mb-4 sm:tw-mb-6 md:tw-mb-8">
             <h2
               className="
@@ -86,6 +130,6 @@ export default function AdminLayout() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }

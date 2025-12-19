@@ -80,6 +80,8 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
     }
   }, [isOpen, profile, isDefaultAdmin]);
 
+
+
   // Load orders when popup opens
   useEffect(() => {
     if (!showOrdersPopup || !profile?.email) {
@@ -100,8 +102,8 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
     const unsub1 = onValue(bulkRef, (snap) => {
       const data = snap.val() || {};
       bulkOrders = Object.entries(data)
-        .map(([id, order]) => ({ 
-          id, 
+        .map(([id, order]) => ({
+          id,
           ...order,
           type: "quote",
           status: order.status || "Pending",
@@ -119,8 +121,8 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
     const unsub2 = onValue(sampleRef, (snap) => {
       const data = snap.val() || {};
       sampleOrders = Object.entries(data)
-        .map(([id, order]) => ({ 
-          id, 
+        .map(([id, order]) => ({
+          id,
           ...order,
           type: "sample_courier",
           paymentStatus: order.paymentStatus || "Pending",
@@ -140,6 +142,61 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
       unsub2();
     };
   }, [showOrdersPopup, profile?.email]);
+
+  useEffect(() => {
+    const adminContainer = document.getElementById("admin-scroll-container");
+
+    const preventScroll = (e) => {
+      e.preventDefault();
+    };
+
+    if (isOpen) {
+      // Lock all scroll sources
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
+
+      if (adminContainer) {
+        adminContainer.style.overflow = "hidden";
+        adminContainer.style.height = "100vh";
+      }
+
+      // 🚫 BLOCK TOUCH SCROLL (THIS WAS MISSING)
+      document.addEventListener("touchmove", preventScroll, { passive: false });
+      document.addEventListener("wheel", preventScroll, { passive: false });
+    } else {
+      // Unlock
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+
+      if (adminContainer) {
+        adminContainer.style.overflow = "";
+        adminContainer.style.height = "";
+      }
+
+      document.removeEventListener("touchmove", preventScroll);
+      document.removeEventListener("wheel", preventScroll);
+    }
+
+    return () => {
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+
+      if (adminContainer) {
+        adminContainer.style.overflow = "";
+        adminContainer.style.height = "";
+      }
+
+      document.removeEventListener("touchmove", preventScroll);
+      document.removeEventListener("wheel", preventScroll);
+    };
+  }, [isOpen]);
+
 
   const filteredOrders = allOrders.filter((o) =>
     activeTab === "sample" ? o.type === "sample_courier" : o.type === "quote"
@@ -170,11 +227,11 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
           createdAt: editData.createdAt || new Date().toISOString(),
         });
       }
-      setMessage({ type: "success", text: "Profile updated!" });
+      setMessage({ type: "success", text: "Profile updated successfully!" });
       setIsEditing(false);
       setTimeout(() => setMessage({ type: "", text: "" }), 3000);
     } catch (err) {
-      setMessage({ type: "error", text: "Failed to save." });
+      setMessage({ type: "error", text: "Failed to save changes. Please try again." });
     } finally {
       setIsLoading(false);
     }
@@ -205,165 +262,277 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
 
   if (!isOpen) return null;
 
+  const allowScrollInside = (e) => {
+  e.stopPropagation();
+};
+
+
   return (
     <>
       {/* Backdrop */}
-      <div className="tw-fixed tw-inset-0 tw-bg-black/40 tw-z-40" onClick={onClose} />
+      <div
+        className="tw-fixed tw-inset-0 tw-bg-black/50 tw-backdrop-blur-sm tw-z-40"
+        onClick={onClose}
+      />
 
-      {/* Main Panel */}
-      <aside className="tw-fixed tw-top-16 tw-right-4 tw-w-80 tw-bg-gray-800 tw-text-white tw-rounded-lg tw-shadow-2xl tw-z-50">
+      {/* Main Panel - POSITIONED ON LEFT SIDE TO AVOID RSS FEED */}
+      <aside
+        className="
+    tw-fixed tw-z-50 tw-bg-gray-900 tw-text-white tw-shadow-2xl tw-border tw-border-gray-700 tw-flex tw-flex-col
+
+    /* MOBILE (default) */
+    tw-bottom-0 tw-left-0 tw-right-0
+    tw-w-full tw-max-h-[85vh]
+    tw-rounded-t-2xl
+
+    /* TABLET */
+    sm:tw-top-24 sm:tw-bottom-auto sm:tw-left-1/2 sm:-tw-translate-x-1/2
+    sm:tw-w-[90%] sm:tw-max-w-[520px]
+    sm:tw-rounded-2xl
+
+    /* DESKTOP */
+    lg:tw-top-28 lg:tw-right-6 lg:tw-left-auto lg:tw-translate-x-0
+    lg:tw-w-[420px] lg:tw-max-h-[85vh]
+  "
+      >
+
         {/* Header */}
-        <div className="tw-flex tw-items-center tw-p-4 tw-border-b tw-border-gray-700">
-          <div className="tw-w-12 tw-h-12 tw-bg-green-500 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-text-xl tw-font-bold">
+        <div className="tw-flex tw-items-center tw-p-5 tw-border-b tw-border-gray-700 tw-bg-gray-800/50 tw-sticky tw-top-0">
+          <div className="tw-w-14 tw-h-14 tw-bg-gradient-to-br tw-from-green-500 tw-to-blue-500 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-text-2xl tw-font-bold tw-shadow-lg">
             {editData.avatar ? (
-              <img src={editData.avatar} alt="Avatar" className="tw-w-full tw-h-full tw-rounded-full" />
+              <img
+                src={editData.avatar}
+                alt="Avatar"
+                className="tw-w-full tw-h-full tw-rounded-full tw-object-cover"
+              />
             ) : (
               getAvatarInitial()
             )}
           </div>
-          <div className="tw-ml-3">
-            <div className="tw-font-semibold">{getDisplayName()}</div>
-            <div className="tw-text-sm tw-text-gray-400">{getDisplayEmail()}</div>
-            {isDefaultAdmin && <div className="tw-text-xs tw-text-yellow-400">Default Administrator</div>}
+          <div className="tw-ml-4">
+            <div className="tw-font-bold tw-text-lg tw-text-white">{getDisplayName()}</div>
+            <div className="tw-text-sm tw-text-gray-300 tw-mt-1">{getDisplayEmail()}</div>
+            {isDefaultAdmin && (
+              <div className="tw-inline-flex tw-items-center tw-mt-2 tw-px-3 tw-py-1 tw-bg-yellow-900/30 tw-text-yellow-300 tw-text-xs tw-font-medium tw-rounded-full tw-border tw-border-yellow-700/50">
+                <span className="tw-w-2 tw-h-2 tw-bg-yellow-400 tw-rounded-full tw-mr-2"></span>
+                Default Administrator
+              </div>
+            )}
           </div>
+          <button
+            onClick={onClose}
+            className="tw-ml-auto tw-text-gray-400 hover:tw-text-white tw-text-xl tw-w-8 tw-h-8 tw-flex tw-items-center tw-justify-center hover:tw-bg-gray-700 tw-rounded-full"
+          >
+            ✕
+          </button>
         </div>
 
-        {/* Menu */}
-        <div className="tw-p-2">
-          {/* My Account */}
-          <button
-            onClick={() => setShowAccountSection(!showAccountSection)}
-            className="tw-flex tw-w-full tw-items-center tw-justify-between tw-p-3 tw-text-gray-300 hover:tw-bg-gray-700 tw-rounded"
-          >
-            <span className="tw-flex tw-items-center">
-              <span className="tw-mr-3">👤</span> {t("my_account")}
-            </span>
-            <span>{showAccountSection ? '▼' : '▶'}</span>
-          </button>
+        {/* Menu Section */}
+        <div className="tw-flex-1 tw-overflow-y-auto tw-scrollbar-thin">
+          <div className="tw-p-4">
+            {/* My Account */}
+            <button
+              onClick={() => setShowAccountSection(!showAccountSection)}
+              className="tw-flex tw-w-full tw-items-center tw-justify-between tw-p-4 tw-mb-3 tw-bg-gray-800/50 hover:tw-bg-gray-700 tw-rounded-xl tw-transition-all tw-duration-200 tw-border tw-border-gray-700/50"
+            >
+              <span className="tw-flex tw-items-center tw-text-base">
+                <span className="tw-mr-3 tw-text-xl">👤</span>
+                <span className="tw-font-medium">{t("my_account")}</span>
+              </span>
+              <span className="tw-text-gray-400">{showAccountSection ? '▼' : '▶'}</span>
+            </button>
 
-          {/* My Orders */}
-          <button
-            onClick={() => {
-              setShowOrdersPopup(true);
-              setActiveTab("sample");
-            }}
-            className="tw-flex tw-w-full tw-items-center tw-justify-between tw-p-3 tw-text-gray-300 hover:tw-bg-gray-700 tw-rounded"
-          >
-            <span className="tw-flex tw-items-center">
-              <span className="tw-mr-3">🛒</span> {t("my_orders")}
-            </span>
-            <span>▶</span>
-          </button>
+            {/* My Orders */}
+            <button
+              onClick={() => {
+                setShowOrdersPopup(true);
+                setActiveTab("sample");
 
-          {/* Settings */}
-          <button
-            onClick={() => setShowSettingsSection(!showSettingsSection)}
-            className="tw-flex tw-w-full tw-items-center tw-justify-between tw-p-3 tw-bg-black tw-border tw-border-yellow-400 tw-rounded tw-text-white"
-          >
-            <span className="tw-flex tw-items-center">
-              <span className="tw-mr-3">🌐</span> {t("settings")}
-            </span>
-            <span>{showSettingsSection ? '▼' : '▶'}</span>
-          </button>
+                if (window.innerWidth < 640) {
+                  onClose(); // close profile on mobile
+                }
+              }}
 
-          {/* Language Dropdown */}
-          {showSettingsSection && (
-            <div className="tw-mt-2 tw-px-3">
-              <select
-                value={currentLang}
-                onChange={(e) => setLanguage(e.target.value)}
-                className="tw-w-full tw-p-3 tw-bg-black tw-text-white tw-border tw-border-yellow-400 tw-rounded focus:tw-outline-none"
-              >
-                <option value="en">English</option>
-                <option value="te">Telugu</option>
-                <option value="hi">Hindi</option>
-                <option value="ur">Urdu</option>
-                <option value="es">Spanish</option>
-                <option value="fr">French</option>
-              </select>
+              className="tw-flex tw-w-full tw-items-center tw-justify-between tw-p-4 tw-mb-3 tw-bg-gray-800/50 hover:tw-bg-gray-700 tw-rounded-xl tw-transition-all tw-duration-200 tw-border tw-border-gray-700/50"
+            >
+              <span className="tw-flex tw-items-center tw-text-base">
+                <span className="tw-mr-3 tw-text-xl">🛒</span>
+                <span className="tw-font-medium">{t("my_orders")}</span>
+              </span>
+              <span className="tw-text-gray-400">▶</span>
+            </button>
+
+            {/* Settings */}
+            <button
+              onClick={() => setShowSettingsSection(!showSettingsSection)}
+              className="tw-flex tw-w-full tw-items-center tw-justify-between tw-p-4 tw-mb-3 tw-bg-gradient-to-r tw-from-yellow-900/30 tw-to-yellow-800/20 hover:tw-from-yellow-800/40 hover:tw-to-yellow-700/30 tw-rounded-xl tw-transition-all tw-duration-200 tw-border tw-border-yellow-700/50"
+            >
+              <span className="tw-flex tw-items-center tw-text-base">
+                <span className="tw-mr-3 tw-text-xl">🌐</span>
+                <span className="tw-font-medium tw-text-yellow-100">{t("settings")}</span>
+              </span>
+              <span className="tw-text-yellow-300">{showSettingsSection ? '▼' : '▶'}</span>
+            </button>
+
+            {/* Language Dropdown */}
+            {showSettingsSection && (
+              <div className="tw-mt-3 tw-mb-4 tw-p-4 tw-bg-gray-800/30 tw-rounded-xl tw-border tw-border-gray-700/50">
+                <label className="tw-block tw-text-sm tw-font-medium tw-text-gray-300 tw-mb-2">
+                  Select Language
+                </label>
+                <select
+                  value={currentLang}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  className="tw-w-full tw-p-3 tw-bg-gray-800 tw-text-white tw-border tw-border-yellow-500/50 tw-rounded-lg focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-yellow-500 focus:tw-border-transparent"
+                >
+                  <option value="en">🇺🇸 English</option>
+                  <option value="te">🇮🇳 Telugu</option>
+                  <option value="hi">🇮🇳 Hindi</option>
+                  <option value="ur">🇵🇰 Urdu</option>
+                  <option value="es">🇪🇸 Spanish</option>
+                  <option value="fr">🇫🇷 French</option>
+                </select>
+              </div>
+            )}
+
+            {/* Sign Out */}
+            <button
+              onClick={handleLogout}
+              className="tw-flex tw-w-full tw-items-center tw-justify-center tw-p-4 tw-mt-4 tw-bg-gradient-to-r tw-from-red-900/30 tw-to-red-800/20 hover:tw-from-red-800/40 hover:tw-to-red-700/30 tw-rounded-xl tw-transition-all tw-duration-200 tw-border tw-border-red-700/50"
+            >
+              <span className="tw-flex tw-items-center tw-text-base tw-text-red-300">
+                <span className="tw-mr-3 tw-text-xl">🚪</span>
+                <span className="tw-font-medium">{t("sign_out")}</span>
+              </span>
+            </button>
+          </div>
+
+          {/* Account Section */}
+          {showAccountSection && (
+            <div className="tw-border-t tw-border-gray-700/50 tw-p-5 tw-bg-gray-800/20">
+              <div className="tw-flex tw-justify-between tw-items-center tw-mb-5">
+                <h3 className="tw-text-lg tw-font-bold tw-text-white">{t("profile_details")}</h3>
+                <button
+                  onClick={() => setIsEditing(!isEditing)}
+                  className="tw-px-4 tw-py-2 tw-bg-blue-600 hover:tw-bg-blue-700 tw-rounded-lg tw-text-sm tw-font-medium tw-transition-colors"
+                >
+                  {isEditing ? t("cancel") : t("edit")}
+                </button>
+              </div>
+
+              {isEditing ? (
+                <>
+                  {[
+                    "name",
+                    "email",
+                    "phone",
+                    "street",
+                    "city",
+                    "addressState",
+                    "addressCountry",
+                    "pincode"
+                  ].map((field) => (
+                    <div key={field} className="tw-mb-3">
+                      <label className="tw-block tw-text-sm tw-font-medium tw-text-gray-300 tw-mb-1 tw-capitalize">
+                        {t(field)}
+                      </label>
+                      <input
+                        id={field}
+                        type={field === "email" ? "email" : "text"}
+                        value={editData[field]}
+                        onChange={handleChange}
+                        className="tw-w-full tw-p-3 tw-mt-1 tw-bg-gray-800 tw-text-white tw-rounded-lg tw-border tw-border-gray-600 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-blue-500 focus:tw-border-transparent"
+                        disabled={field === "email" && isDefaultAdmin}
+                      />
+                    </div>
+                  ))}
+                  <button
+                    onClick={handleSave}
+                    disabled={isLoading}
+                    className="tw-w-full tw-py-3 tw-mt-4 tw-bg-gradient-to-r tw-from-blue-600 tw-to-blue-700 hover:tw-from-blue-700 hover:tw-to-blue-800 tw-rounded-lg tw-font-medium tw-transition-all tw-duration-200"
+                  >
+                    {isLoading ? "Saving..." : t("save_changes")}
+                  </button>
+                </>
+              ) : (
+                <div className="tw-space-y-4">
+                  <div className="tw-grid tw-grid-cols-2 tw-gap-4">
+                    <div className="tw-bg-gray-800/50 tw-p-3 tw-rounded-lg">
+                      <p className="tw-text-sm tw-text-gray-400">{t("name")}</p>
+                      <p className="tw-font-medium tw-text-white">{editData.name || "—"}</p>
+                    </div>
+                    <div className="tw-bg-gray-800/50 tw-p-3 tw-rounded-lg">
+                      <p className="tw-text-sm tw-text-gray-400">{t("email")}</p>
+                      <p className="tw-font-medium tw-text-white tw-truncate">{editData.email || "—"}</p>
+                    </div>
+                  </div>
+
+                  <div className="tw-bg-gray-800/50 tw-p-3 tw-rounded-lg">
+                    <p className="tw-text-sm tw-text-gray-400">{t("phone")}</p>
+                    <p className="tw-font-medium tw-text-white">{editData.phone || "—"}</p>
+                  </div>
+
+                  <div className="tw-grid tw-grid-cols-2 tw-gap-4">
+                    <div className="tw-bg-gray-800/50 tw-p-3 tw-rounded-lg">
+                      <p className="tw-text-sm tw-text-gray-400">Street</p>
+                      <p className="tw-font-medium tw-text-white">{editData.street || "—"}</p>
+                    </div>
+                    <div className="tw-bg-gray-800/50 tw-p-3 tw-rounded-lg">
+                      <p className="tw-text-sm tw-text-gray-400">City</p>
+                      <p className="tw-font-medium tw-text-white">{editData.city || "—"}</p>
+                    </div>
+                  </div>
+
+                  <div className="tw-grid tw-grid-cols-2 tw-gap-4">
+                    <div className="tw-bg-gray-800/50 tw-p-3 tw-rounded-lg">
+                      <p className="tw-text-sm tw-text-gray-400">State</p>
+                      <p className="tw-font-medium tw-text-white">{editData.addressState || "—"}</p>
+                    </div>
+                    <div className="tw-bg-gray-800/50 tw-p-3 tw-rounded-lg">
+                      <p className="tw-text-sm tw-text-gray-400">Country</p>
+                      <p className="tw-font-medium tw-text-white">{editData.addressCountry || "—"}</p>
+                    </div>
+                  </div>
+
+                  <div className="tw-grid tw-grid-cols-2 tw-gap-4">
+                    <div className="tw-bg-gray-800/50 tw-p-3 tw-rounded-lg">
+                      <p className="tw-text-sm tw-text-gray-400">Pincode</p>
+                      <p className="tw-font-medium tw-text-white">{editData.pincode || "—"}</p>
+                    </div>
+                    <div className="tw-bg-gray-800/50 tw-p-3 tw-rounded-lg">
+                      <p className="tw-text-sm tw-text-gray-400">User ID</p>
+                      <p className="tw-font-medium tw-text-white">{editData.customId || "N/A"}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {message.text && (
+                <div className={`tw-mt-4 tw-p-3 tw-rounded-lg tw-text-center tw-text-sm tw-font-medium ${message.type === "success"
+                  ? "tw-bg-green-900/30 tw-text-green-300 tw-border tw-border-green-700/50"
+                  : "tw-bg-red-900/30 tw-text-red-300 tw-border tw-border-red-700/50"
+                  }`}>
+                  {message.text}
+                </div>
+              )}
             </div>
           )}
-
-          {/* Sign Out */}
-          <button
-            onClick={handleLogout}
-            className="tw-flex tw-w-full tw-items-center tw-p-3 tw-text-red-400 hover:tw-bg-red-900 tw-rounded"
-          >
-            <span className="tw-mr-3">🚪</span> {t("sign_out")}
-          </button>
         </div>
 
-        {/* Account Section */}
-        {showAccountSection && (
-          <div className="tw-border-t tw-border-gray-700 tw-p-4">
-            <div className="tw-flex tw-justify-between tw-mb-4">
-              <h3 className="tw-text-lg tw-font-bold">{t("profile_details")}</h3>
-              <button onClick={() => setIsEditing(!isEditing)} className="tw-text-blue-400">
-                {isEditing ? t("cancel") : t("edit")}
-              </button>
-            </div>
-
-            {isEditing ? (
-              <>
-                {[
-                  "name",
-                  "email",
-                  "phone",
-                  "street",
-                  "city",
-                  "addressState",
-                  "addressCountry",
-                  "pincode"
-                ].map((field) => (
-                  <div key={field} className="tw-mb-3">
-                    <label className="tw-block tw-text-sm tw-capitalize">{t(field)}</label>
-                    <input
-                      id={field}
-                      type={field === "email" ? "email" : "text"}
-                      value={editData[field]}
-                      onChange={handleChange}
-                      className="tw-w-full tw-p-2 tw-mt-1 tw-bg-gray-700 tw-rounded tw-border tw-border-gray-600"
-                      disabled={field === "email" && isDefaultAdmin}
-                    />
-                  </div>
-                ))}
-                <button
-                  onClick={handleSave}
-                  disabled={isLoading}
-                  className="tw-w-full tw-py-2 tw-bg-blue-600 tw-rounded hover:tw-bg-blue-700"
-                >
-                  {isLoading ? "Saving..." : t("save_changes")}
-                </button>
-              </>
-            ) : (
-              <div className="tw-space-y-2">
-                <p><strong>{t("name")}:</strong> {editData.name || "—"}</p>
-                <p><strong>{t("email")}:</strong> {editData.email || "—"}</p>
-                <p><strong>{t("phone")}:</strong> {editData.phone || "—"}</p>
-                <p><strong>Street:</strong> {editData.street || "—"}</p>
-                <p><strong>City:</strong> {editData.city || "—"}</p>
-                <p><strong>State:</strong> {editData.addressState || "—"}</p>
-                <p><strong>Country:</strong> {editData.addressCountry || "—"}</p>
-                <p><strong>Pincode:</strong> {editData.pincode || "—"}</p>
-                <p><strong>User ID:</strong> {editData.customId || "N/A"}</p>
-              </div>
-            )}
-
-            {message.text && (
-              <div className={`tw-mt-3 tw-p-3 tw-rounded tw-text-center ${message.type === "success" ? "tw-bg-green-900" : "tw-bg-red-900"}`}>
-                {message.text}
-              </div>
-            )}
-          </div>
-        )}
+        {/* Footer */}
+        <div className="tw-p-4 tw-border-t tw-border-gray-700/50 tw-bg-gray-800/30">
+          <p className="tw-text-xs tw-text-center tw-text-gray-400">
+            SIEA Rice Exports • © {new Date().getFullYear()}
+          </p>
+        </div>
       </aside>
 
       {/* My Orders Popup */}
       {showOrdersPopup && !showOrderDetails && (
         <>
           <div className="tw-fixed tw-inset-0 tw-bg-black/70 tw-z-50" onClick={() => setShowOrdersPopup(false)} />
-          <div className="tw-fixed tw-inset-0 tw-flex tw-items-center tw-justify-center tw-z-50 tw-p-4">
-            <div className="tw-bg-gray-900 tw-rounded-2xl tw-shadow-2xl tw-max-w-2xl tw-w-full tw-max-h-[85vh] tw-overflow-hidden tw-border tw-border-gray-700">
+          <div className="tw-fixed tw-inset-0 tw-flex tw-items-center tw-justify-center tw-z-50 tw-p-4" style={{ paddingTop: '80px' }}>
+            <div className="tw-bg-gray-900 tw-rounded-2xl tw-shadow-2xl tw-max-w-2xl tw-w-full tw-max-h-[75vh] tw-overflow-hidden tw-border tw-border-gray-700">
               <div className="tw-p-6 tw-border-b tw-border-gray-700 tw-flex tw-justify-between">
                 <h2 className="tw-text-2xl tw-font-bold tw-text-yellow-400">{t("my_orders")}</h2>
                 <button onClick={() => setShowOrdersPopup(false)} className="tw-text-3xl tw-text-gray-400 hover:tw-text-white">
@@ -375,20 +544,24 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
               <div className="tw-flex tw-border-b tw-border-gray-700">
                 <button
                   onClick={() => setActiveTab("sample")}
-                  className={`tw-flex-1 tw-py-4 tw-font-bold ${activeTab === "sample" ? "tw-bg-yellow-600 tw-text-black" : "tw-bg-gray-800"}`}
+                  className={`tw-flex-1 tw-py-4 tw-font-bold tw-text-lg ${activeTab === "sample" ? "tw-bg-yellow-600 tw-text-black" : "tw-bg-gray-800 hover:tw-bg-gray-700"}`}
                 >
                   Sample Courier
                 </button>
                 <button
                   onClick={() => setActiveTab("quote")}
-                  className={`tw-flex-1 tw-py-4 tw-font-bold ${activeTab === "quote" ? "tw-bg-yellow-600 tw-text-black" : "tw-bg-gray-800"}`}
+                  className={`tw-flex-1 tw-py-4 tw-font-bold tw-text-lg ${activeTab === "quote" ? "tw-bg-yellow-600 tw-text-black" : "tw-bg-gray-800 hover:tw-bg-gray-700"}`}
                 >
                   Get Quote
                 </button>
               </div>
 
               {/* Orders List */}
-              <div className="tw-p-6 tw-max-h-96 tw-overflow-y-auto">
+<div
+  className="tw-p-6 tw-max-h-[50vh] tw-overflow-y-auto"
+  onWheel={allowScrollInside}
+  onTouchMove={allowScrollInside}
+>
                 {ordersLoading ? (
                   <p className="tw-text-center tw-py-10 tw-text-gray-400">Loading orders...</p>
                 ) : filteredOrders.length === 0 ? (
@@ -397,9 +570,9 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
                   </p>
                 ) : (
                   filteredOrders.map((order) => (
-                    <div 
-                      key={order.id} 
-                      className="tw-bg-gray-800 tw-rounded-lg tw-p-4 tw-mb-4 tw-border tw-border-gray-700 hover:tw-border-yellow-500 tw-cursor-pointer"
+                    <div
+                      key={order.id}
+                      className="tw-bg-gray-800 tw-rounded-lg tw-p-4 tw-mb-4 tw-border tw-border-gray-700 hover:tw-border-yellow-500 tw-cursor-pointer tw-transition-all tw-duration-200"
                       onClick={() => handleViewOrderDetails(order)}
                     >
                       <div className="tw-flex tw-justify-between">
@@ -428,19 +601,18 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
 
                         <div className="tw-flex tw-flex-col tw-items-end tw-justify-between">
                           <span
-                            className={`tw-inline-flex tw-items-center tw-justify-center tw-min-w-[70px] tw-h-[28px] tw-text-xs tw-font-semibold tw-text-white tw-rounded-full ${
-                              order.type === "sample_courier"
-                                ? (order.paymentStatus === "Paid"
-                                  ? "tw-bg-green-600"
-                                  : "tw-bg-orange-500")
-                                : order.status === "Completed"
+                            className={`tw-inline-flex tw-items-center tw-justify-center tw-min-w-[70px] tw-h-[28px] tw-text-xs tw-font-semibold tw-text-white tw-rounded-full ${order.type === "sample_courier"
+                              ? (order.paymentStatus === "Paid"
+                                ? "tw-bg-green-600"
+                                : "tw-bg-orange-500")
+                              : order.status === "Completed"
                                 ? "tw-bg-green-600"
                                 : order.status === "Quoted"
-                                ? "tw-bg-blue-600"
-                                : order.status === "Cancelled"
-                                ? "tw-bg-red-600"
-                                : "tw-bg-orange-500"
-                            }`}
+                                  ? "tw-bg-blue-600"
+                                  : order.status === "Cancelled"
+                                    ? "tw-bg-red-600"
+                                    : "tw-bg-orange-500"
+                              }`}
                           >
                             {order.type === "sample_courier"
                               ? (order.paymentStatus || "Pending")
@@ -464,8 +636,8 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
       {showOrderDetails && selectedOrder && (
         <>
           <div className="tw-fixed tw-inset-0 tw-bg-black/70 tw-z-50" onClick={() => setShowOrderDetails(false)} />
-          <div className="tw-fixed tw-inset-0 tw-flex tw-items-center tw-justify-center tw-z-50 tw-p-4">
-            <div className="tw-bg-gray-900 tw-rounded-2xl tw-shadow-2xl tw-max-w-4xl tw-w-full tw-max-h-[90vh] tw-overflow-hidden tw-border tw-border-gray-700">
+          <div className="tw-fixed tw-inset-0 tw-flex tw-items-center tw-justify-center tw-z-50 tw-p-4" style={{ paddingTop: '80px' }}>
+            <div className="tw-bg-gray-900 tw-rounded-2xl tw-shadow-2xl tw-max-w-4xl tw-w-full tw-max-h-[80vh] tw-overflow-hidden tw-border tw-border-gray-700">
               {/* Header */}
               <div className="tw-p-6 tw-border-b tw-border-gray-700 tw-flex tw-justify-between tw-items-center">
                 <div>
@@ -476,8 +648,8 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
                     Order ID: {selectedOrder.id} • {new Date(selectedOrder.timestamp || Date.now()).toLocaleString()}
                   </p>
                 </div>
-                <button 
-                  onClick={() => setShowOrderDetails(false)} 
+                <button
+                  onClick={() => setShowOrderDetails(false)}
                   className="tw-text-3xl tw-text-gray-400 hover:tw-text-white"
                 >
                   ×
@@ -485,25 +657,28 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
               </div>
 
               {/* Content */}
-              <div className="tw-p-6 tw-overflow-y-auto tw-max-h-[70vh]">
+<div
+  className="tw-p-6 tw-overflow-y-auto tw-max-h-[60vh]"
+  onWheel={allowScrollInside}
+  onTouchMove={allowScrollInside}
+>
                 {/* Status Bar */}
                 <div className="tw-mb-6 tw-p-4 tw-bg-gray-800 tw-rounded-lg">
                   <div className="tw-flex tw-justify-between tw-items-center">
                     <div>
                       <span className="tw-font-bold tw-text-lg">Status:</span>
-                      <span className={`tw-ml-3 tw-px-3 tw-py-1 tw-rounded-full tw-text-sm tw-font-bold ${
-                        selectedOrder.type === "sample_courier"
-                          ? (selectedOrder.paymentStatus === "Paid"
-                            ? "tw-bg-green-600 tw-text-white"
-                            : "tw-bg-orange-500 tw-text-white")
-                          : selectedOrder.status === "Completed"
+                      <span className={`tw-ml-3 tw-px-3 tw-py-1 tw-rounded-full tw-text-sm tw-font-bold ${selectedOrder.type === "sample_courier"
+                        ? (selectedOrder.paymentStatus === "Paid"
+                          ? "tw-bg-green-600 tw-text-white"
+                          : "tw-bg-orange-500 tw-text-white")
+                        : selectedOrder.status === "Completed"
                           ? "tw-bg-green-600 tw-text-white"
                           : selectedOrder.status === "Quoted"
-                          ? "tw-bg-blue-600 tw-text-white"
-                          : selectedOrder.status === "Cancelled"
-                          ? "tw-bg-red-600 tw-text-white"
-                          : "tw-bg-orange-500 tw-text-white"
-                      }`}>
+                            ? "tw-bg-blue-600 tw-text-white"
+                            : selectedOrder.status === "Cancelled"
+                              ? "tw-bg-red-600 tw-text-white"
+                              : "tw-bg-orange-500 tw-text-white"
+                        }`}>
                         {selectedOrder.type === "sample_courier"
                           ? (selectedOrder.paymentStatus || "Pending")
                           : (selectedOrder.status || "Pending")}
@@ -511,15 +686,15 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
                     </div>
                     <div className="tw-text-right">
                       <p className="tw-text-2xl tw-font-bold tw-text-yellow-400">
-                        ₹{selectedOrder.type === "sample_courier" 
-                          ? selectedOrder.totalAmount || "0" 
+                        ₹{selectedOrder.type === "sample_courier"
+                          ? selectedOrder.totalAmount || "0"
                           : selectedOrder.totalPrice || "Pending"}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Order Details Grid - Conditional rendering based on order type */}
+                {/* Order Details Grid */}
                 <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-6 tw-mb-6">
                   {/* Customer Details - Only for Sample Courier */}
                   {selectedOrder.type === "sample_courier" && (
@@ -576,7 +751,7 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
                   <h3 className="tw-text-lg tw-font-bold tw-text-yellow-400 tw-mb-3">
                     {selectedOrder.type === "sample_courier" ? "Order Items" : "Request Details"}
                   </h3>
-                  
+
                   {selectedOrder.type === "sample_courier" ? (
                     selectedOrder.items && selectedOrder.items.length > 0 ? (
                       <div className="tw-overflow-x-auto">
@@ -586,7 +761,6 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
                               <th className="tw-py-2 tw-text-left">Product</th>
                               <th className="tw-py-2 tw-text-left">Quantity</th>
                               <th className="tw-py-2 tw-text-left">Price</th>
-                              {/* <th className="tw-py-2 tw-text-left">Total</th> */}
                             </tr>
                           </thead>
                           <tbody>
@@ -600,7 +774,6 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
                                 </td>
                                 <td className="tw-py-3">{item.quantity || 1}</td>
                                 <td className="tw-py-3">₹{item.price || "0"}</td>
-                                {/* <td className="tw-py-3 tw-font-bold">₹{item.total || "0"}</td> */}
                               </tr>
                             ))}
                           </tbody>

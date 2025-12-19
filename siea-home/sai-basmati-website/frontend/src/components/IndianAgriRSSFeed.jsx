@@ -190,17 +190,17 @@ const IndianAgriRSSFeed = () => {
 
   // Keep your random generation functions as they are...
 
-  const getTypeIcon = (type) => {
-    switch (type) {
-      case 'policy': return '📜';
-      case 'subsidy': return '💰';
-      case 'trade': return '📊';
-      case 'msp': return '⚖️';
-      case 'registration': return '📝';
-      case 'farmer': return '🚜';
-      default: return '🌾';
-    }
-  };
+  // const getTypeIcon = (type) => {
+  //   switch (type) {
+  //     case 'policy': return '📜';
+  //     case 'subsidy': return '💰';
+  //     case 'trade': return '📊';
+  //     case 'msp': return '⚖️';
+  //     case 'registration': return '📝';
+  //     case 'farmer': return '🚜';
+  //     default: return '🌾';
+  //   }
+  // };
 
   return (
     <div className="IndianAgriRSSFeed" style={{
@@ -253,7 +253,7 @@ const IndianAgriRSSFeed = () => {
               }}
             >
               <span className="text-lg">
-                {getTypeIcon(feed.type)}
+                {/* {getTypeIcon(feed.type)} */}
               </span>
               <strong className={`font-semibold ${feed.link && feed.link !== "#"
                 ? 'group-hover:text-yellow-300'
@@ -261,12 +261,12 @@ const IndianAgriRSSFeed = () => {
                 }`}>
                 {feed.title}
               </strong>
-              <span className="text-xs font-medium bg-white/10 px-2 py-1 rounded border border-yellow-400/30">
+              {/* <span className="text-xs font-medium bg-white/10 px-2 py-1 rounded border border-yellow-400/30">
                 {feed.source}
-              </span>
-              {feed.link && feed.link !== "#" && (
+              </span> */}
+              {/* {feed.link && feed.link !== "#" && (
                 <ExternalLink size={12} className="opacity-70" />
-              )}
+              )} */}
             </div>
           ))}
         </div>

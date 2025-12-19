@@ -16,7 +16,7 @@ const JoinUs = () => {
     vendorExperience: '',
     vendorCapacity: '',
     vendorCertifications: '',
-    
+
     // Distributor Form
     distributorName: '',
     distributorEmail: '',
@@ -27,7 +27,7 @@ const JoinUs = () => {
     distributorAnnualTurnover: '',
     distributorStorageCapacity: '',
     distributorExistingBrands: '',
-    
+
     // Partner Form
     partnerName: '',
     partnerEmail: '',
@@ -37,7 +37,7 @@ const JoinUs = () => {
     partnerBusinessModel: '',
     partnerBackground: '',
     partnerExpectations: '',
-    
+
     // Agent Form
     agentName: '',
     agentEmail: '',
@@ -138,9 +138,9 @@ ${submissionData.company ? `Company: ${submissionData.company}` : ''}
 
 *Business Details:*
 ${Object.entries(submissionData)
-  .filter(([key]) => !['name', 'email', 'phone', 'company'].includes(key))
-  .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}: ${value}`)
-  .join('\n')}
+        .filter(([key]) => !['name', 'email', 'phone', 'company'].includes(key))
+        .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}: ${value}`)
+        .join('\n')}
 
 *Submitted On:* ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
     `.trim();
@@ -223,7 +223,7 @@ ${Object.entries(submissionData)
                 />
               </div>
             </div>
-            
+
             <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-6">
               <div>
                 <input
@@ -627,14 +627,14 @@ ${Object.entries(submissionData)
   };
 
   return (
-    <section className="join-us-section tw-py-16 tw-px-4 tw-bg-gradient-to-br tw-from-gray-900 tw-to-black tw-min-h-screen">
-      <div className="container tw-max-w-6xl tw-mx-auto">
+    <section className="join-us-section tw-py-12 sm:tw-py-16 tw-px-3 sm:tw-px-4 tw-bg-gradient-to-br tw-from-gray-900 tw-to-black tw-min-h-screen">
+      <div className="container tw-max-w-6xl tw-mx-auto tw-w-full">
         {/* Header */}
         <div className="tw-text-center tw-mb-12">
-          <h1 className="tw-text-4xl tw-font-bold tw-text-yellow-400 tw-mb-4">
+          <h1 className="tw-text-2xl sm:tw-text-3xl lg:tw-text-4xl tw-font-bold tw-text-yellow-400 tw-mb-4">
             Join Our Network
           </h1>
-          <p className="tw-text-xl tw-text-yellow-200 tw-max-w-3xl tw-mx-auto">
+          <p className="tw-text-base sm:tw-text-lg lg:tw-text-xl tw-text-yellow-200 tw-max-w-3xl tw-mx-auto">
             Partner with India's leading rice distribution network. Grow your business with our premium quality products and extensive market reach.
           </p>
         </div>
@@ -655,26 +655,27 @@ ${Object.entries(submissionData)
         <div className="tw-bg-black/40 tw-backdrop-blur-xl tw-rounded-3xl tw-shadow-2xl tw-border-4 tw-border-yellow-400 tw-overflow-hidden">
           {/* Tabs */}
           <div className="tw-bg-yellow-900/50 tw-backdrop-blur-lg tw-border-b-2 tw-border-yellow-600">
-            <div className="tw-grid tw-grid-cols-2 lg:tw-grid-cols-4">
+            <div className="tw-grid tw-grid-cols-2 sm:tw-grid-cols-2 lg:tw-grid-cols-4">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`tw-p-6 tw-text-lg tw-font-bold tw-transition-all tw-duration-300 tw-flex tw-items-center tw-justify-center tw-gap-3 ${
-                    activeTab === tab.id
+                  className={`tw-p-3 sm:tw-p-4 lg:tw-p-6 tw-text-sm sm:tw-text-base lg:tw-text-lg tw-font-bold tw-transition-all tw-duration-300 tw-flex tw-flex-col sm:tw-flex-row 
+                  tw-items-center tw-justify-center tw-gap-1 sm:tw-gap-3 sm:tw-gap-3 ${activeTab === tab.id
                       ? 'tw-bg-yellow-500 tw-text-black tw-shadow-inner'
                       : 'tw-text-yellow-300 hover:tw-bg-yellow-900/70 hover:tw-text-yellow-100'
-                  }`}
-                >
+                    }`}>
                   <span className="tw-text-2xl">{tab.icon}</span>
-                  <span className="tw-hidden sm:tw-inline">{tab.label}</span>
+                  <span className="tw-text-xs sm:tw-text-base tw-block tw-text-center">
+                    {tab.label}
+                  </span>
                 </button>
               ))}
             </div>
           </div>
 
           {/* Form Content */}
-          <div className="tw-p-8">
+          <div className="tw-p-4 sm:tw-p-6 lg:tw-p-8">
             <form onSubmit={handleSubmit} className="tw-space-y-8">
               {renderForm()}
 
@@ -683,7 +684,16 @@ ${Object.entries(submissionData)
                 <button
                   type="submit"
                   disabled={loading}
-                  className="tw-px-12 tw-py-4 tw-bg-gradient-to-r tw-from-yellow-500 tw-to-yellow-600 hover:tw-from-yellow-400 hover:tw-to-yellow-500 tw-text-black tw-font-bold tw-text-xl tw-rounded-2xl tw-shadow-2xl tw-transition-all tw-duration-300 transform hover:tw-scale-105 disabled:tw-opacity-50 disabled:tw-cursor-not-allowed"
+                  className="tw-px-6 sm:tw-px-10 lg:tw-px-12 
+  tw-py-3 sm:tw-py-4 
+  tw-bg-gradient-to-r tw-from-yellow-500 tw-to-yellow-600 
+  hover:tw-from-yellow-400 hover:tw-to-yellow-500 
+  tw-text-black tw-font-bold 
+  tw-text-base sm:tw-text-lg lg:tw-text-xl 
+  tw-rounded-2xl tw-shadow-2xl 
+  tw-transition-all tw-duration-300 
+  transform hover:tw-scale-105 
+  disabled:tw-opacity-50 disabled:tw-cursor-not-allowed"
                 >
                   {loading ? (
                     <div className="tw-flex tw-items-center tw-gap-3">
@@ -694,7 +704,7 @@ ${Object.entries(submissionData)
                     `Submit ${tabs.find(t => t.id === activeTab)?.label} Application`
                   )}
                 </button>
-                
+
                 <p className="tw-text-yellow-300 tw-mt-4 tw-text-sm">
                   Your application will be sent via WhatsApp and our team will contact you within 24 hours.
                 </p>
@@ -704,19 +714,19 @@ ${Object.entries(submissionData)
         </div>
 
         {/* Benefits Section */}
-        <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-3 tw-gap-8 tw-mt-16">
+        <div className="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 lg:tw-grid-cols-3 tw-gap-6 lg:tw-gap-8 tw-mt-12 lg:tw-mt-16">
           <div className="tw-bg-yellow-900/30 tw-backdrop-blur tw-rounded-2xl tw-p-6 tw-border-2 tw-border-yellow-600 tw-text-center">
             <div className="tw-text-4xl tw-mb-4">🚀</div>
             <h3 className="tw-text-xl tw-font-bold tw-text-yellow-400 tw-mb-2">Business Growth</h3>
             <p className="tw-text-yellow-200">Access to premium products and extensive market network</p>
           </div>
-          
+
           <div className="tw-bg-yellow-900/30 tw-backdrop-blur tw-rounded-2xl tw-p-6 tw-border-2 tw-border-yellow-600 tw-text-center">
             <div className="tw-text-4xl tw-mb-4">🛡️</div>
             <h3 className="tw-text-xl tw-font-bold tw-text-yellow-400 tw-mb-2">Full Support</h3>
             <p className="tw-text-yellow-200">Marketing, training, and operational support provided</p>
           </div>
-          
+
           <div className="tw-bg-yellow-900/30 tw-backdrop-blur tw-rounded-2xl tw-p-6 tw-border-2 tw-border-yellow-600 tw-text-center">
             <div className="tw-text-4xl tw-mb-4">💰</div>
             <h3 className="tw-text-xl tw-font-bold tw-text-yellow-400 tw-mb-2">Lucrative Returns</h3>

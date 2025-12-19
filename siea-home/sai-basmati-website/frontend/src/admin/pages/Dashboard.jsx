@@ -11,7 +11,7 @@ import {
   PieChart, Pie, Cell, Legend,
   BarChart, Bar
 } from "recharts";
-
+  
 const ALERT_BEEP_BASE64 = "data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAA..."; // short placeholder
 // NOTE: above is placeholder. Browser will accept short silent beep; replace if you want.
 

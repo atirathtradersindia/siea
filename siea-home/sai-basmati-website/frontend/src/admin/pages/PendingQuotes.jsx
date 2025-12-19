@@ -18,6 +18,11 @@ export default function PendingQuotes() {
 
   const statusOptions = ["Pending", "Processing", "Quoted", "Completed", "Cancelled", "On Hold"];
 
+  const notifyAdminModal = (open) => {
+    window.dispatchEvent(new CustomEvent("admin-modal", { detail: open }));
+  };
+
+
   useEffect(() => {
     const unsubscribe = onValue(ref(db, "quotes/bulk"), (snap) => {
       if (!snap.exists()) {
@@ -42,7 +47,7 @@ export default function PendingQuotes() {
   const handleProcessQuote = async (quoteId) => {
     try {
       setProcessingQuoteId(quoteId);
-      
+
       await update(ref(db, `quotes/${quoteId}`), {
         status: "Processing",
         processedAt: Date.now()
@@ -50,7 +55,7 @@ export default function PendingQuotes() {
 
       navigate("/admin/orders?section=bulk");
       alert("Quote marked as processing and redirected to bulk orders!");
-      
+
     } catch (error) {
       console.error("Error processing quote:", error);
       alert("Failed to process quote. Please try again.");
@@ -62,13 +67,22 @@ export default function PendingQuotes() {
   const handleViewQuote = (quote) => {
     setSelectedQuote(quote);
     setShowViewModal(true);
+    notifyAdminModal(true);
   };
 
   const handleUpdateQuote = (quote) => {
     setSelectedQuote(quote);
     setUpdateStatus(quote.status || "Pending");
     setShowUpdateModal(true);
+    notifyAdminModal(true);
   };
+  const closeAllModals = () => {
+    setShowViewModal(false);
+    setShowUpdateModal(false);
+    setSelectedQuote(null);
+    notifyAdminModal(false);
+  };
+
 
   const handleStatusUpdate = async () => {
     if (!selectedQuote || !updateStatus) return;
@@ -79,14 +93,14 @@ export default function PendingQuotes() {
         status: updateStatus,
         updatedAt: Date.now()
       });
-      
+
       // Update local state
-      setQuotes(prev => prev.map(quote => 
-        quote.id === selectedQuote.id 
+      setQuotes(prev => prev.map(quote =>
+        quote.id === selectedQuote.id
           ? { ...quote, status: updateStatus, updatedAt: Date.now() }
           : quote
       ));
-      
+
       setShowUpdateModal(false);
       setSelectedQuote(null);
       alert(`Quote status updated to: ${updateStatus}`);
@@ -164,7 +178,7 @@ export default function PendingQuotes() {
               💡 <strong>Tip:</strong> Click "View" to see complete quote details, "Update" to change status, or "Process Quote" to move to bulk orders.
             </p>
           </div>
-          
+
           <div className="tw-grid tw-grid-cols-1 lg:tw-grid-cols-2 tw-gap-4">
             {quotes.map((quote) => (
               <div
@@ -174,11 +188,10 @@ export default function PendingQuotes() {
                 <div className="tw-flex tw-justify-between tw-items-start tw-mb-4">
                   <div>
                     <div className="tw-flex tw-items-center tw-gap-2 tw-mb-2">
-                      <span className={`tw-px-2 tw-py-1 tw-rounded tw-text-xs ${
-                        quote.type === "sample_courier" 
-                          ? "tw-bg-blue-500/20 tw-text-blue-300" 
-                          : "tw-bg-purple-500/20 tw-text-purple-300"
-                      }`}>
+                      <span className={`tw-px-2 tw-py-1 tw-rounded tw-text-xs ${quote.type === "sample_courier"
+                        ? "tw-bg-blue-500/20 tw-text-blue-300"
+                        : "tw-bg-purple-500/20 tw-text-purple-300"
+                        }`}>
                         {quote.type === "sample_courier" ? "Sample Courier" : "Bulk Quote"}
                       </span>
                       <span className="tw-text-gray-500 tw-text-xs">
@@ -217,14 +230,14 @@ export default function PendingQuotes() {
                       </p>
                     </div>
                   )}
-                  
+
                   {quote.quantity && (
                     <div className="tw-flex tw-items-center tw-gap-2">
                       <span className="tw-text-gray-400">📊</span>
                       <span className="tw-text-white">Quantity: {quote.quantity}</span>
                     </div>
                   )}
-                  
+
                   {quote.product && (
                     <div className="tw-flex tw-items-center tw-gap-2">
                       <span className="tw-text-gray-400">📦</span>
@@ -242,19 +255,19 @@ export default function PendingQuotes() {
                       </span>
                     </div>
                     <div className="tw-flex tw-gap-2">
-                      <button 
+                      <button
                         onClick={() => handleViewQuote(quote)}
                         className="tw-bg-blue-500 hover:tw-bg-blue-600 tw-text-white tw-px-3 tw-py-1.5 tw-rounded-lg tw-text-sm tw-font-medium"
                       >
                         View
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleUpdateQuote(quote)}
                         className="tw-bg-gray-800 hover:tw-bg-gray-700 tw-text-white tw-px-3 tw-py-1.5 tw-rounded-lg tw-text-sm tw-font-medium"
                       >
                         Update
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleProcessQuote(quote.id)}
                         disabled={processingQuoteId === quote.id}
                         className={`
@@ -290,14 +303,15 @@ export default function PendingQuotes() {
             <div className="tw-p-6">
               <div className="tw-flex tw-justify-between tw-items-center tw-mb-6">
                 <h2 className="tw-text-2xl tw-font-bold tw-text-yellow-500">Quote Details</h2>
-                <button 
-                  onClick={() => setShowViewModal(false)}
+                <button
+                  onClick={closeAllModals}
                   className="tw-text-gray-400 hover:tw-text-white tw-text-2xl"
                 >
                   &times;
                 </button>
+
               </div>
-              
+
               <div className="tw-grid tw-grid-cols-1 lg:tw-grid-cols-2 tw-gap-6">
                 {/* Left Column - Basic Information */}
                 <div className="tw-space-y-4">
@@ -310,11 +324,10 @@ export default function PendingQuotes() {
                       </div>
                       <div className="tw-flex tw-justify-between">
                         <span className="tw-text-gray-400">Type:</span>
-                        <span className={`tw-px-3 tw-py-1 tw-rounded-full tw-text-xs ${
-                          selectedQuote.type === "sample_courier" 
-                            ? "tw-bg-blue-500/20 tw-text-blue-300" 
-                            : "tw-bg-purple-500/20 tw-text-purple-300"
-                        }`}>
+                        <span className={`tw-px-3 tw-py-1 tw-rounded-full tw-text-xs ${selectedQuote.type === "sample_courier"
+                          ? "tw-bg-blue-500/20 tw-text-blue-300"
+                          : "tw-bg-purple-500/20 tw-text-purple-300"
+                          }`}>
                           {selectedQuote.type === "sample_courier" ? "Sample Courier" : "Bulk Quote"}
                         </span>
                       </div>
@@ -412,7 +425,7 @@ export default function PendingQuotes() {
               </div>
 
               <div className="tw-mt-6 tw-flex tw-justify-end tw-gap-3">
-                <button 
+                <button
                   onClick={() => {
                     setShowViewModal(false);
                     handleUpdateQuote(selectedQuote);
@@ -421,7 +434,7 @@ export default function PendingQuotes() {
                 >
                   Update Status
                 </button>
-                <button 
+                <button
                   onClick={() => {
                     setShowViewModal(false);
                     handleProcessQuote(selectedQuote.id);
@@ -443,14 +456,15 @@ export default function PendingQuotes() {
             <div className="tw-p-6">
               <div className="tw-flex tw-justify-between tw-items-center tw-mb-6">
                 <h2 className="tw-text-2xl tw-font-bold tw-text-yellow-500">Update Quote Status</h2>
-                <button 
-                  onClick={() => setShowUpdateModal(false)}
+                <button
+                  onClick={closeAllModals}
                   className="tw-text-gray-400 hover:tw-text-white tw-text-2xl"
                 >
                   &times;
                 </button>
+
               </div>
-              
+
               <div className="tw-mb-6">
                 <p className="tw-text-gray-300 tw-mb-2">Quote ID: <span className="tw-font-mono">{selectedQuote.id.slice(0, 12)}...</span></p>
                 <p className="tw-text-gray-300">Customer: <span className="tw-text-white">{selectedQuote.name || selectedQuote.email || "Anonymous"}</span></p>
@@ -463,19 +477,18 @@ export default function PendingQuotes() {
                     <button
                       key={status}
                       onClick={() => setUpdateStatus(status)}
-                      className={`tw-p-2 tw-rounded tw-text-sm tw-font-medium tw-transition-colors ${
-                        updateStatus === status
-                          ? status === "Processing"
-                            ? "tw-bg-yellow-600 tw-text-white"
-                            : status === "Quoted"
+                      className={`tw-p-2 tw-rounded tw-text-sm tw-font-medium tw-transition-colors ${updateStatus === status
+                        ? status === "Processing"
+                          ? "tw-bg-yellow-600 tw-text-white"
+                          : status === "Quoted"
                             ? "tw-bg-blue-600 tw-text-white"
                             : status === "Completed"
-                            ? "tw-bg-green-600 tw-text-white"
-                            : status === "Cancelled"
-                            ? "tw-bg-red-600 tw-text-white"
-                            : "tw-bg-gray-700 tw-text-white"
-                          : "tw-bg-gray-800 tw-text-gray-300 hover:tw-bg-gray-700"
-                      }`}
+                              ? "tw-bg-green-600 tw-text-white"
+                              : status === "Cancelled"
+                                ? "tw-bg-red-600 tw-text-white"
+                                : "tw-bg-gray-700 tw-text-white"
+                        : "tw-bg-gray-800 tw-text-gray-300 hover:tw-bg-gray-700"
+                        }`}
                     >
                       {status}
                     </button>
@@ -484,14 +497,14 @@ export default function PendingQuotes() {
               </div>
 
               <div className="tw-flex tw-justify-end tw-gap-3">
-                <button 
+                <button
                   onClick={() => setShowUpdateModal(false)}
                   className="tw-bg-gray-800 hover:tw-bg-gray-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-lg"
                   disabled={updating}
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={handleStatusUpdate}
                   disabled={updating || !updateStatus}
                   className="tw-bg-yellow-500 hover:tw-bg-yellow-600 tw-text-black tw-px-6 tw-py-2 tw-rounded-lg tw-font-medium tw-flex tw-items-center tw-gap-2"

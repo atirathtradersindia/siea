@@ -17,7 +17,7 @@ import IndianAgriRSSFeed from "../components/IndianAgriRSSFeed";
 
 export default function Home() {
   const { t } = useLanguage();
-  
+
   return (
     <>
       <IndianAgriRSSFeed />
@@ -89,9 +89,12 @@ export default function Home() {
           <Service />
         </div>
       </section>
-      <section id="contact-feedback" className="tw-my-12">
-        <div className="container tw-bg-white/10 tw-backdrop-blur-lg tw-rounded-2xl tw-shadow-md tw-p-8">
-          <h2 className="tw-text-3xl tw-font-bold tw-text-center tw-text-yellow-400 tw-mb-8">
+      <section
+        id="contact-feedback"
+        className="tw-my-12 tw-px-3 sm:tw-px-6"
+      >
+        <div className="container tw-max-w-7xl tw-mx-auto tw-bg-white/10 tw-backdrop-blur-lg tw-rounded-2xl tw-shadow-md tw-p-4 sm:tw-p-6 lg:tw-p-8">
+          <h2 className="tw-text-xl sm:tw-text-2xl lg:tw-text-3xl tw-font-bold tw-text-center tw-text-yellow-400 tw-mb-6 sm:tw-mb-8">
             {t("get_in_touch")}
           </h2>
           <div className="tw-grid tw-grid-cols-1 lg:tw-grid-cols-2 tw-gap-8">

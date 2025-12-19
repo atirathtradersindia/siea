@@ -7,46 +7,39 @@ const Prices = () => {
   const [selectedState, setSelectedState] = useState("");
   const [loading, setLoading] = useState(true);
 
-  /* ------------------ NEW: CURRENCY CONVERTER ------------------ */
+  /* ------------------ CURRENCY CONVERTER ------------------ */
   const [currency, setCurrency] = useState("INR");
-  const [rates, setRates] = useState({
+  const rates = {
     INR: 1,
     USD: 0.012,
     EUR: 0.011,
     GBP: 0.0096,
     AED: 0.044,
-  });
-
-  const convertPrice = (priceRange) => {
-  if (!priceRange) return "";
-
-  // Currency symbols
-  const symbols = {
-    INR: "₹",
-    USD: "$",
-    EUR: "€",
-    GBP: "£",
-    AED: "د.إ",
   };
 
-  const symbol = symbols[currency];
+  const convertPrice = (priceRange) => {
+    if (!priceRange) return "";
 
-  // No conversion needed for INR
-  if (currency === "INR") return priceRange;
+    const symbols = {
+      INR: "₹",
+      USD: "$",
+      EUR: "€",
+      GBP: "£",
+      AED: "د.إ",
+    };
 
-  const num = priceRange.replace(/₹/g, "").split("-");
-  const low = parseFloat(num[0].trim());
-  const high = parseFloat(num[1].trim());
+    if (currency === "INR") return priceRange;
 
-  const rate = rates[currency];
+    const [low, high] = priceRange
+      .replace(/₹/g, "")
+      .split("-")
+      .map((n) => parseFloat(n.trim()));
 
-  const convertedLow = (low * rate).toFixed(2);
-  const convertedHigh = (high * rate).toFixed(2);
-
-  return `${symbol}${convertedLow} - ${symbol}${convertedHigh}`;
-};
-
-  /* -------------------------------------------------------------- */
+    return `${symbols[currency]}${(low * rates[currency]).toFixed(
+      2
+    )} - ${symbols[currency]}${(high * rates[currency]).toFixed(2)}`;
+  };
+  /* -------------------------------------------------------- */
 
   useEffect(() => {
     const ratesRef = ref(db, "market_rates/");
@@ -60,21 +53,23 @@ const Prices = () => {
     });
   }, []);
 
-  if (loading)
+  if (loading) {
     return (
       <div style={styles.loadingScreen}>
         <div style={styles.loader}></div>
         <span style={styles.loadingText}>Fetching Market Rates...</span>
       </div>
     );
+  }
 
   const states = Object.keys(data);
+  const isMobile = window.innerWidth < 640;
 
   return (
     <div style={styles.container}>
       <h1 style={styles.mainTitle}>Basmati & Non-Basmati Market Rates</h1>
 
-      {/* ------------------- NEW CURRENCY DROPDOWN ------------------- */}
+      {/* Currency */}
       <div style={styles.currencyBox}>
         <label style={{ marginRight: "10px" }}>Currency:</label>
         <select
@@ -89,7 +84,6 @@ const Prices = () => {
           <option value="AED">AED (د.إ)</option>
         </select>
       </div>
-      {/* -------------------------------------------------------------- */}
 
       {/* State Tabs */}
       <div style={styles.tabRow}>
@@ -113,14 +107,14 @@ const Prices = () => {
         ))}
       </div>
 
-      {/* Selected State Data */}
+      {/* Data Card */}
       <div style={styles.card}>
         <h2 style={styles.stateTitle}>
           {selectedState.replace("_", " ").toUpperCase()}
         </h2>
 
         {/* BASMATI */}
-        {data[selectedState].basmati && (
+        {data[selectedState]?.basmati && (
           <>
             <h3 style={styles.sectionTitle}>
               BASMATI <span style={styles.goldLine}></span>
@@ -131,14 +125,25 @@ const Prices = () => {
                 <h4 style={styles.varietyName}>{item.variety}</h4>
 
                 {item.items.map((v, i) => (
-                  <div key={i} style={styles.row}>
-                    <span style={styles.rowLabel}>{v.type}</span>
-                    <span>{v.crop_year}</span>
+                  <div
+                    key={i}
+                    style={{
+                      ...styles.row,
+                      gridTemplateColumns: isMobile ? "1fr" : "1fr auto",
+                    }}
+                  >
+                    {/* LEFT */}
+                    <div>
+                      <div style={styles.rowLabel}>{v.type}</div>
+                      <div style={styles.cropYear}>
+                        Crop Year: {v.crop_year}
+                      </div>
+                    </div>
 
-                    {/* NEW: Converted Price */}
-                    <span style={styles.rowPrice}>
+                    {/* RIGHT PRICE */}
+                    <div style={styles.rowPrice}>
                       {convertPrice(v.price)}
-                    </span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -147,7 +152,7 @@ const Prices = () => {
         )}
 
         {/* NON BASMATI */}
-        {data[selectedState].non_basmati && (
+        {data[selectedState]?.non_basmati && (
           <>
             <h3 style={styles.sectionTitle}>
               NON-BASMATI <span style={styles.goldLine}></span>
@@ -158,14 +163,23 @@ const Prices = () => {
                 <h4 style={styles.varietyName}>{item.variety}</h4>
 
                 {item.items.map((v, i) => (
-                  <div key={i} style={styles.row}>
-                    <span style={styles.rowLabel}>{v.type}</span>
-                    <span>{v.crop_year}</span>
+                  <div
+                    key={i}
+                    style={{
+                      ...styles.row,
+                      gridTemplateColumns: isMobile ? "1fr" : "1fr auto",
+                    }}
+                  >
+                    <div>
+                      <div style={styles.rowLabel}>{v.type}</div>
+                      <div style={styles.cropYear}>
+                        Crop Year: {v.crop_year}
+                      </div>
+                    </div>
 
-                    {/* NEW: Converted Price */}
-                    <span style={styles.rowPrice}>
+                    <div style={styles.rowPrice}>
                       {convertPrice(v.price)}
-                    </span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -181,72 +195,59 @@ const styles = {
   container: {
     background: "#000",
     minHeight: "100vh",
-    padding: "20px",
+    padding: "clamp(12px, 4vw, 20px)",
     fontFamily: "Poppins, sans-serif",
     color: "white",
   },
 
   mainTitle: {
     textAlign: "center",
-    fontSize: "28px",
+    fontSize: "clamp(18px, 5vw, 28px)",
     fontWeight: "bold",
     marginBottom: "25px",
     color: "#FFD700",
-    textShadow: "0 0 10px rgba(212,175,55,0.8)",
   },
 
-  /* ---------------------- NEW CURRENCY DROPDOWN ---------------------- */
-  currencyBox: {
-    marginBottom: "20px",
-    textAlign: "center",
-  },
+  currencyBox: { textAlign: "center", marginBottom: "20px" },
 
   currencyDropdown: {
     padding: "10px 15px",
     borderRadius: "8px",
     background: "#111",
-    color: "white",
+    color: "#fff",
     border: "1px solid #FFD700",
-    fontSize: "14px",
   },
-  /* --------------------------------------------------------------------- */
 
   tabRow: {
     display: "flex",
-    overflowX: "auto",
     gap: "12px",
-    paddingBottom: "10px",
+    overflowX: "auto",
     marginBottom: "25px",
   },
 
   tabButton: {
-    padding: "12px 20px",
+    padding: "10px 18px",
     borderRadius: "25px",
     fontWeight: "600",
     cursor: "pointer",
-    fontSize: "14px",
-    transition: "0.3s",
     whiteSpace: "nowrap",
   },
 
   card: {
     background: "#0d0d0d",
-    padding: "20px",
+    padding: "clamp(14px, 4vw, 20px)",
     borderRadius: "15px",
     border: "1px solid #FFD700",
-    boxShadow: "0 0 20px rgba(212,175,55,0.3)",
   },
 
   stateTitle: {
-    fontSize: "24px",
+    fontSize: "clamp(18px, 4.5vw, 24px)",
     marginBottom: "20px",
-    fontWeight: "600",
   },
 
   sectionTitle: {
-    fontSize: "20px",
+    fontSize: "clamp(16px, 4vw, 20px)",
     color: "#FFD700",
-    marginTop: "20px",
     marginBottom: "12px",
   },
 
@@ -274,19 +275,25 @@ const styles = {
 
   row: {
     display: "grid",
-    gridTemplateColumns: "1fr 100px 150px",
-    padding: "10px 0",
+    gap: "12px",
+    padding: "12px 0",
     borderBottom: "1px solid #333",
     alignItems: "center",
-    fontSize: "15px",
   },
 
-  rowLabel: { fontWeight: "bold" },
+  rowLabel: { fontWeight: "700" },
+
+  cropYear: {
+    fontSize: "13px",
+    opacity: 0.7,
+  },
 
   rowPrice: {
     color: "#FFD700",
-    fontWeight: "600",
+    fontWeight: "700",
+    fontSize: "clamp(14px, 4vw, 18px)",
     textAlign: "right",
+    whiteSpace: "nowrap",
   },
 
   loadingScreen: {
@@ -305,7 +312,7 @@ const styles = {
     animation: "spin 1s linear infinite",
   },
 
-  loadingText: { marginTop: "10px", fontSize: "16px" },
+  loadingText: { marginTop: "10px" },
 };
 
 export default Prices;

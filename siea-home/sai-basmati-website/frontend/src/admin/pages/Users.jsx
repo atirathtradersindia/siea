@@ -9,6 +9,13 @@ export default function Users() {
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
 
+  const notifyAdminModal = (open) => {
+    window.dispatchEvent(
+      new CustomEvent("admin-modal", { detail: open })
+    );
+  };
+
+
 
   useEffect(() => {
     const usersRef = ref(db, "users");
@@ -227,7 +234,10 @@ export default function Users() {
                   </td>
                   <td style={{ padding: "10px 8px" }}>
                     <button
-                      onClick={() => setSelectedUser(u)}
+                      onClick={() => {
+                        setSelectedUser(u);
+                        notifyAdminModal(true);
+                      }}
                       style={{
                         padding: "6px 12px",
                         background: "#FFD700",
@@ -361,142 +371,149 @@ export default function Users() {
         </div>
       )}
       {selectedUser && (
-  <div
-    style={{
-      position: "fixed",
-      top: 0,
-      left: 0,
-      width: "100vw",
-      height: "100vh",
-      background: "rgba(0,0,0,0.7)",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      zIndex: 9999,
-    }}
-    onClick={() => setSelectedUser(null)}
-  >
-    <div
-      onClick={(e) => e.stopPropagation()}
-      style={{
-        background: "#0d0d0d",
-        padding: "25px",
-        borderRadius: "12px",
-        width: "90%",
-        maxWidth: "420px",
-        border: "1px solid #FFD700",
-        boxShadow: "0 0 20px rgba(255,215,0,0.3)",
-      }}
-    >
-      <h2
-        style={{
-          color: "#FFD700",
-          marginBottom: "15px",
-          textAlign: "center",
-          letterSpacing: "1px",
-        }}
-      >
-        User Profile
-      </h2>
-
-      {/* Custom User ID */}
-      <p style={{ color: "#FFD700", marginBottom: 8 }}>
-        <strong>Custom ID:</strong>{" "}
-        <span style={{ color: "#fff" }}>{selectedUser.customId}</span>
-      </p>
-
-      {/* Firebase UID */}
-      <p style={{ color: "#FFD700", marginBottom: 8 }}>
-        <strong>Firebase UID:</strong>{" "}
-        <span
+        <div
           style={{
-            color: "#ccc",
-            fontFamily: "monospace",
-            wordBreak: "break-all",
-            display: "inline-block",
-            maxWidth: "100%",
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(0,0,0,0.7)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
           }}
+          onClick={() => {
+            setSelectedUser(null);
+            notifyAdminModal(false);
+          }}
+
         >
-          {selectedUser.firebaseUid}
-        </span>
-      </p>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#0d0d0d",
+              padding: "25px",
+              borderRadius: "12px",
+              width: "90%",
+              maxWidth: "420px",
+              border: "1px solid #FFD700",
+              boxShadow: "0 0 20px rgba(255,215,0,0.3)",
+            }}
+          >
+            <h2
+              style={{
+                color: "#FFD700",
+                marginBottom: "15px",
+                textAlign: "center",
+                letterSpacing: "1px",
+              }}
+            >
+              User Profile
+            </h2>
 
-      {/* Full Name */}
-      <p style={{ color: "#FFD700", marginBottom: 8 }}>
-        <strong>Name:</strong>{" "}
-        <span style={{ color: "#fff" }}>{selectedUser.fullName}</span>
-      </p>
+            {/* Custom User ID */}
+            <p style={{ color: "#FFD700", marginBottom: 8 }}>
+              <strong>Custom ID:</strong>{" "}
+              <span style={{ color: "#fff" }}>{selectedUser.customId}</span>
+            </p>
 
-      {/* Email */}
-      <p style={{ color: "#FFD700", marginBottom: 8 }}>
-        <strong>Email:</strong>{" "}
-        <span style={{ color: "#fff", wordBreak: "break-all" }}>
-          {selectedUser.email}
-        </span>
-      </p>
+            {/* Firebase UID */}
+            <p style={{ color: "#FFD700", marginBottom: 8 }}>
+              <strong>Firebase UID:</strong>{" "}
+              <span
+                style={{
+                  color: "#ccc",
+                  fontFamily: "monospace",
+                  wordBreak: "break-all",
+                  display: "inline-block",
+                  maxWidth: "100%",
+                }}
+              >
+                {selectedUser.firebaseUid}
+              </span>
+            </p>
 
-      {/* Phone */}
-      <p style={{ color: "#FFD700", marginBottom: 8 }}>
-        <strong>Phone:</strong>{" "}
-        <span style={{ color: "#fff" }}>{selectedUser.phone}</span>
-      </p>
+            {/* Full Name */}
+            <p style={{ color: "#FFD700", marginBottom: 8 }}>
+              <strong>Name:</strong>{" "}
+              <span style={{ color: "#fff" }}>{selectedUser.fullName}</span>
+            </p>
 
-      {/* Address Section */}
-      <h3 style={{ color: "#FFD700", marginTop: 15, marginBottom: 5 }}>Address</h3>
+            {/* Email */}
+            <p style={{ color: "#FFD700", marginBottom: 8 }}>
+              <strong>Email:</strong>{" "}
+              <span style={{ color: "#fff", wordBreak: "break-all" }}>
+                {selectedUser.email}
+              </span>
+            </p>
 
-      <p style={{ color: "#FFD700", marginBottom: 6 }}>
-        <strong>Street:</strong>{" "}
-        <span style={{ color: "#fff" }}>{selectedUser.street || "N/A"}</span>
-      </p>
+            {/* Phone */}
+            <p style={{ color: "#FFD700", marginBottom: 8 }}>
+              <strong>Phone:</strong>{" "}
+              <span style={{ color: "#fff" }}>{selectedUser.phone}</span>
+            </p>
 
-      <p style={{ color: "#FFD700", marginBottom: 6 }}>
-        <strong>City:</strong>{" "}
-        <span style={{ color: "#fff" }}>{selectedUser.city || "N/A"}</span>
-      </p>
+            {/* Address Section */}
+            <h3 style={{ color: "#FFD700", marginTop: 15, marginBottom: 5 }}>Address</h3>
 
-      <p style={{ color: "#FFD700", marginBottom: 6 }}>
-        <strong>State:</strong>{" "}
-        <span style={{ color: "#fff" }}>{selectedUser.addressState || "N/A"}</span>
-      </p>
+            <p style={{ color: "#FFD700", marginBottom: 6 }}>
+              <strong>Street:</strong>{" "}
+              <span style={{ color: "#fff" }}>{selectedUser.street || "N/A"}</span>
+            </p>
 
-      <p style={{ color: "#FFD700", marginBottom: 6 }}>
-        <strong>Country:</strong>{" "}
-        <span style={{ color: "#fff" }}>{selectedUser.addressCountry || "N/A"}</span>
-      </p>
+            <p style={{ color: "#FFD700", marginBottom: 6 }}>
+              <strong>City:</strong>{" "}
+              <span style={{ color: "#fff" }}>{selectedUser.city || "N/A"}</span>
+            </p>
 
-      <p style={{ color: "#FFD700", marginBottom: 6 }}>
-        <strong>Pincode:</strong>{" "}
-        <span style={{ color: "#fff" }}>{selectedUser.pincode || "N/A"}</span>
-      </p>
+            <p style={{ color: "#FFD700", marginBottom: 6 }}>
+              <strong>State:</strong>{" "}
+              <span style={{ color: "#fff" }}>{selectedUser.addressState || "N/A"}</span>
+            </p>
 
-      {/* Created At */}
-      <p style={{ color: "#FFD700", marginTop: 10 }}>
-        <strong>Created At:</strong>{" "}
-        <span style={{ color: "#fff" }}>
-          {selectedUser.createdAt || "N/A"}
-        </span>
-      </p>
+            <p style={{ color: "#FFD700", marginBottom: 6 }}>
+              <strong>Country:</strong>{" "}
+              <span style={{ color: "#fff" }}>{selectedUser.addressCountry || "N/A"}</span>
+            </p>
 
-      {/* Close Button */}
-      <button
-        onClick={() => setSelectedUser(null)}
-        style={{
-          marginTop: "20px",
-          width: "100%",
-          padding: "10px",
-          borderRadius: "8px",
-          background: "#FFD700",
-          fontWeight: "bold",
-          fontSize: "14px",
-          cursor: "pointer",
-          color: "#000",
-        }}
-      >
-        Close
-      </button>
+            <p style={{ color: "#FFD700", marginBottom: 6 }}>
+              <strong>Pincode:</strong>{" "}
+              <span style={{ color: "#fff" }}>{selectedUser.pincode || "N/A"}</span>
+            </p>
+
+            {/* Created At */}
+            <p style={{ color: "#FFD700", marginTop: 10 }}>
+              <strong>Created At:</strong>{" "}
+              <span style={{ color: "#fff" }}>
+                {selectedUser.createdAt || "N/A"}
+              </span>
+            </p>
+
+            {/* Close Button */}
+            <button
+              onClick={() => {
+                setSelectedUser(null);
+                notifyAdminModal(false);
+              }}
+              style={{
+                marginTop: "20px",
+                width: "100%",
+                padding: "10px",
+                borderRadius: "8px",
+                background: "#FFD700",
+                fontWeight: "bold",
+                fontSize: "14px",
+                cursor: "pointer",
+                color: "#000",
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
-  </div>
-)}
-   </div>
   );
 }

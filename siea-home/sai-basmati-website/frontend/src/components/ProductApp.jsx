@@ -9,7 +9,7 @@ import ThankYouPopup from '../components/ThankYouPopup';
 import BasmatiRSSFeed from "../components/BasmatiRSSFeed";
 import '../Prod.css';
 
-const AppContent = ({ profile, showWarning }) => {
+const AppContent = ({ profile, showWarning, searchQuery }) => {
   const { t } = useLanguage();
 
   // Currency State
@@ -19,7 +19,6 @@ const AppContent = ({ profile, showWarning }) => {
   const [allProducts, setAllProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [filteredCategory, setFilteredCategory] = useState('Basmati Rice');
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
   const [isThankYouOpen, setIsThankYouOpen] = useState(false);
@@ -42,24 +41,24 @@ const AppContent = ({ profile, showWarning }) => {
 
   // Fetch products
   // Fetch products + preserve Firebase key as firebaseId
-useEffect(() => {
-  const r = ref(db, "products");
-  const unsubscribe = onValue(r, snap => {
-    if (snap.exists()) {
-      const data = snap.val();
-      const list = Object.keys(data).map(key => ({
-        ...data[key],
-        firebaseId: key  // This is the REAL Firebase node key
-      }));
-      setAllProducts(list);
-      setFilteredProducts(list);
-    } else {
-      setAllProducts([]);
-      setFilteredProducts([]);
-    }
-  });
-  return () => unsubscribe();
-}, []);
+  useEffect(() => {
+    const r = ref(db, "products");
+    const unsubscribe = onValue(r, snap => {
+      if (snap.exists()) {
+        const data = snap.val();
+        const list = Object.keys(data).map(key => ({
+          ...data[key],
+          firebaseId: key  // This is the REAL Firebase node key
+        }));
+        setAllProducts(list);
+        setFilteredProducts(list);
+      } else {
+        setAllProducts([]);
+        setFilteredProducts([]);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Filtering
   useEffect(() => {
@@ -71,14 +70,21 @@ useEffect(() => {
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
+
       filtered = filtered.filter(p =>
-        p.name?.en?.toLowerCase().includes(q) ||
-        p.desc?.en?.toLowerCase().includes(q)
+        Object.values(p.name || {}).some(v =>
+          v?.toLowerCase().includes(q)
+        ) ||
+        Object.values(p.desc || {}).some(v =>
+          v?.toLowerCase().includes(q)
+        )
       );
     }
 
+
     setFilteredProducts(filtered);
   }, [filteredCategory, searchQuery, allProducts]);
+
 
   const showBuyQuery = (productId) => {
     const product = allProducts.find(p => p.firebaseId === productId || p.id === productId);
@@ -162,8 +168,13 @@ useEffect(() => {
   );
 };
 
-const ProductApp = ({ profile, setProfile, showWarning }) => (
-  <AppContent profile={profile} showWarning={showWarning} />
+const ProductApp = ({ profile, setProfile, showWarning, searchQuery }) => (
+  <AppContent
+    profile={profile}
+    showWarning={showWarning}
+    searchQuery={searchQuery}
+  />
 );
+
 
 export default ProductApp;

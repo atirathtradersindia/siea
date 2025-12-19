@@ -33,6 +33,9 @@ import PendingQuotes from "./admin/pages/PendingQuotes";
 import TodaysOrders from "./admin/pages/TodaysOrders";
 import AdminMarketPrices from "./admin/AdminMarketPrices";
 import History from "./admin/pages/History";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "./firebase";
+
 
 
 function ScrollToHash() {
@@ -58,6 +61,8 @@ function ScrollToHash() {
 export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+
 
   const [profile, setProfile] = useState(() => {
     try {
@@ -67,6 +72,24 @@ export default function App() {
       return null;
     }
   });
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        // 🔐 Not logged in → remove fake admin/profile
+        setProfile(null);
+        localStorage.removeItem("profile");
+        localStorage.removeItem("isAdmin");
+      } else if (profile && profile.email !== user.email) {
+        // 🔐 Logged in but mismatch → clear
+        setProfile(null);
+        localStorage.removeItem("profile");
+      }
+    });
+
+    return () => unsub();
+  }, []);
+
 
   const [showWarningPopup, setShowWarningPopup] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -101,15 +124,16 @@ export default function App() {
 
   const showWarning = () => setShowWarningPopup(true);
 
-  const searchProducts = (query) => {
-    console.log("Search:", query);
-  };
+  const searchProducts = (value) => {
+  setSearchQuery(value);
+};
+
 
   const goHome = () => navigate("/");
-const isProductsPage =
-  location.pathname === "/Products-All" ||
-  location.pathname === "/transport" ||
-  location.pathname === "/sea-freight";
+  const isProductsPage =
+    location.pathname === "/Products-All" ||
+    location.pathname === "/transport" ||
+    location.pathname === "/sea-freight";
 
   return (
     <LanguageProvider>
@@ -199,7 +223,7 @@ const isProductsPage =
               <Route path="/market-rates" element={<Prices />} />
               <Route path="/feedback" element={<Feedback />} />
               <Route path="/about" element={<About />} />
-              <Route path="/Products-All" element={<ProductApp profile={profile} setProfile={setProfile} showWarning={showWarning} />} />
+              <Route path="/Products-All" element={<ProductApp profile={profile} setProfile={setProfile} showWarning={showWarning} searchQuery={searchQuery} />} />
               <Route path="/register" element={<Register setProfile={setProfile} />} />
               <Route path="/login" element={<Login setProfile={setProfile} />} />
               <Route path="/contact" element={<Contact />} />

@@ -6,6 +6,11 @@ export default function History() {
   const [history, setHistory] = useState([]);
   const [selected, setSelected] = useState(null);
 
+  const notifyAdminModal = (open) => {
+    window.dispatchEvent(new CustomEvent("admin-modal", { detail: open }));
+  };
+
+
   useEffect(() => {
     const historyRef = ref(db, "history");
 
@@ -101,7 +106,11 @@ export default function History() {
 
                 <td className="tw-p-3">
                   <button
-                    onClick={() => setSelected(h)}
+                    onClick={() => {
+                      setSelected(h);
+                      notifyAdminModal(true);
+                    }}
+
                     className="tw-bg-blue-600 hover:tw-bg-blue-700 tw-text-white tw-px-3 tw-py-1 tw-rounded"
                   >
                     View
@@ -118,7 +127,10 @@ export default function History() {
         <div className="tw-fixed tw-inset-0 tw-bg-black/70 tw-flex tw-justify-center tw-items-center tw-z-50">
           <div className="tw-bg-[#0f172a] tw-w-[90%] md:tw-w-[70%] tw-max-h-[85vh] tw-p-6 tw-rounded-xl tw-overflow-hidden">
             <button
-              onClick={() => setSelected(null)}
+              onClick={() => {
+                setSelected(null);
+                notifyAdminModal(false);
+              }}
               className="tw-text-red-400 tw-text-2xl tw-float-right"
             >
               ✕

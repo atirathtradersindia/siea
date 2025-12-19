@@ -103,7 +103,7 @@ export default function Products() {
           {t("products_title")}
         </h1>
 
-        <div className="tw-absolute tw-right-0">
+        <div className="tw-absolute tw-right-0 tw-mt-10 sm:tw-mt-0">
           <button
             onClick={() => setShowDropdown(!showDropdown)}
             className="tw-bg-black/50 tw-backdrop-blur-md tw-border tw-border-yellow-400/40 tw-text-yellow-300 tw-px-4 tw-py-2 tw-rounded-lg tw-text-sm sm:tw-text-base tw-font-semibold tw-transition-all tw-duration-300 hover:tw-bg-yellow-400 hover:tw-text-black hover:tw-shadow-md hover:tw-scale-105"
