@@ -18,9 +18,8 @@ const IndianAgriRSSFeed = () => {
   const scrollPositionRef = useRef(0);
 
   // Use relative URL for production, localhost for development
-  const API_BASE_URL = process.env.NODE_ENV === 'production'
-    ? window.location.origin
-    : "http://localhost:8000";
+ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 
   useEffect(() => {
     console.log("IndianAgriRSSFeed mounted, fetching feeds from:", API_BASE_URL);
@@ -188,19 +187,6 @@ const IndianAgriRSSFeed = () => {
     return 'general';
   };
 
-  // Keep your random generation functions as they are...
-
-  // const getTypeIcon = (type) => {
-  //   switch (type) {
-  //     case 'policy': return '📜';
-  //     case 'subsidy': return '💰';
-  //     case 'trade': return '📊';
-  //     case 'msp': return '⚖️';
-  //     case 'registration': return '📝';
-  //     case 'farmer': return '🚜';
-  //     default: return '🌾';
-  //   }
-  // };
 
   return (
     <div className="IndianAgriRSSFeed" style={{
@@ -261,12 +247,7 @@ const IndianAgriRSSFeed = () => {
                 }`}>
                 {feed.title}
               </strong>
-              {/* <span className="text-xs font-medium bg-white/10 px-2 py-1 rounded border border-yellow-400/30">
-                {feed.source}
-              </span> */}
-              {/* {feed.link && feed.link !== "#" && (
-                <ExternalLink size={12} className="opacity-70" />
-              )} */}
+             
             </div>
           ))}
         </div>

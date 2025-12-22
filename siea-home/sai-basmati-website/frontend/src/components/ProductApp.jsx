@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import { useLanguage } from '../contexts/LanguageContext';
 import { db } from "../firebase";
 import { ref, onValue } from "firebase/database";
@@ -7,6 +7,7 @@ import ProductsGrid from '../pages/ProductsGrid';
 import BuyModal from '../pages/BuyModal';
 import ThankYouPopup from '../components/ThankYouPopup';
 import BasmatiRSSFeed from "../components/BasmatiRSSFeed";
+import ProductDetailsPanel from '../pages/ProductDetailsPanel';
 import '../Prod.css';
 
 const AppContent = ({ profile, showWarning, searchQuery }) => {
@@ -24,6 +25,13 @@ const AppContent = ({ profile, showWarning, searchQuery }) => {
   const [isThankYouOpen, setIsThankYouOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showRssFeed, setShowRssFeed] = useState(true);
+  const [detailsProduct, setDetailsProduct] = useState(null);
+  const productsContainerRef = useRef(null);
+
+
+
+
+
 
   // Currency Configuration
   const currencies = [
@@ -60,6 +68,11 @@ const AppContent = ({ profile, showWarning, searchQuery }) => {
     return () => unsubscribe();
   }, []);
 
+
+
+
+
+
   // Filtering
   useEffect(() => {
     let filtered = allProducts;
@@ -86,18 +99,34 @@ const AppContent = ({ profile, showWarning, searchQuery }) => {
   }, [filteredCategory, searchQuery, allProducts]);
 
 
-  const showBuyQuery = (productId) => {
-    const product = allProducts.find(p => p.firebaseId === productId || p.id === productId);
-    setSelectedProduct(product);
-    setIsBuyModalOpen(true);
+  const showBuyQuery = (productId, type = "buy") => {
+    const product = allProducts.find(
+      p => p.firebaseId === productId || p.id === productId
+    );
+
+    if (type === "details") {
+      // scrollOnDetailsChangeRef.current = false; // 👈 IMPORTANT
+
+      setIsSidebarOpen(false);
+      setShowRssFeed(false);
+      setDetailsProduct(product);
+    }
+    else {
+      setSelectedProduct(product);
+      setIsBuyModalOpen(true);
+    }
   };
+
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   return (
     <div className="flex flex-1">
 
-      {showRssFeed && <BasmatiRSSFeed />}
+      <div className={showRssFeed ? "" : "tw-hidden"}>
+        <BasmatiRSSFeed />
+      </div>
+
 
       {/* Currency Selector - Top Right */}
       <div className="tw-fixed tw-top-25 sm:tw-top-21 tw-right-4 sm:tw-right-8 tw-z-50">
@@ -129,25 +158,79 @@ const AppContent = ({ profile, showWarning, searchQuery }) => {
       </div>
 
       <div className="flex flex-1 mt-14">
-        <div className={`fixed top-[60px] bottom-[64px] transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-0'} bg-[#111111] z-40 overflow-hidden`}>
-          <Sidebar
-            filteredCategory={filteredCategory}
-            setFilteredCategory={setFilteredCategory}
-            isOpen={isSidebarOpen}
-            toggleSidebar={toggleSidebar}
-          />
-        </div>
+        {!detailsProduct && (
+          <div
+            className={`fixed top-[60px] bottom-[64px] transition-all duration-300 ${detailsProduct ? "tw-hidden" : isSidebarOpen ? "w-64" : "w-0"
+              } bg-[#111111] z-40 overflow-hidden`}
+          >
+            <Sidebar
+              filteredCategory={filteredCategory}
+              setFilteredCategory={setFilteredCategory}
+              isOpen={isSidebarOpen}
+              toggleSidebar={toggleSidebar}
+            />
+          </div>
 
-        <div className={`products-container flex-1 transition-all duration-300 p-4 ${isSidebarOpen ? 'sidebar-open' : 'ml-0'}`}>
-          <ProductsGrid
-            products={filteredProducts}
-            showBuyQuery={showBuyQuery}
-            profile={profile}
-            showWarning={showWarning}
-            currency={currency}
-            getConversionRate={getConversionRate}
-            getCurrencySymbol={getCurrencySymbol}
-          />
+        )}
+
+
+
+        <div
+          ref={productsContainerRef}
+          className={`products-container flex-1 transition-all duration-300 p-4 ${detailsProduct
+              ? 'details-open'
+              : isSidebarOpen
+                ? 'sidebar-open'
+                : ''
+            }`}
+        >
+
+
+          {detailsProduct ? (
+            <ProductDetailsPanel
+              product={detailsProduct}
+              allProducts={allProducts}
+              onBack={() => {
+                setDetailsProduct(null);
+                setShowRssFeed(true);
+              }}
+              onEnquire={() => {
+                if (!profile) {
+                  showWarning();
+                  return;
+                }
+                setSelectedProduct(detailsProduct);
+                setIsBuyModalOpen(true);
+              }}
+              onViewDetails={(prod) => {
+                setDetailsProduct(prod);
+
+                // 🔥 SCROLL THE CONTAINER, NOT WINDOW
+                requestAnimationFrame(() => {
+                  productsContainerRef.current?.scrollTo({
+                    top: 0,
+                    behavior: "smooth",
+                  });
+                });
+              }}
+
+              getConversionRate={getConversionRate}
+              getCurrencySymbol={getCurrencySymbol}
+            />
+
+          ) : (
+            <ProductsGrid
+              products={filteredProducts}
+              showBuyQuery={showBuyQuery}
+              profile={profile}
+              showWarning={showWarning}
+              currency={currency}
+              getConversionRate={getConversionRate}
+              getCurrencySymbol={getCurrencySymbol}
+            />
+          )}
+
+
         </div>
       </div>
 

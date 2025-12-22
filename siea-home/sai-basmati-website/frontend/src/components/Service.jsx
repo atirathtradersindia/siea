@@ -100,7 +100,7 @@ const Service = () => {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [apiLoading, setApiLoading] = useState(false);
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || "https://siea.onrender.com";
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://siea.onrender.com";
 
   // Commented out pincode fetching function
   /*

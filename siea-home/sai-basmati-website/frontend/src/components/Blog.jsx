@@ -108,9 +108,9 @@ const Blog = () => {
           </ul>
           <h2 className="tw-text-xl tw-font-semibold tw-text-yellow-400 tw-mt-6 tw-mb-4">{t("why_buyers_choose_indian_rice")}</h2>
           <ul className="tw-list-disc tw-pl-5 tw-mb-4">
-            <li><strong>Quality & Aroma:</strong> Indian basmati rice is globally recognized for its aroma and long grains.</li>
-            <li><strong>Wide Range:</strong> From luxury basmati to budget non-basmati, there’s a variety for every market.</li>
-            <li><strong>Strong Export Network:</strong> India has a well-established supply chain ensuring timely delivery worldwide.</li>
+            <li><strong>{t("quality_aroma")} : </strong> Indian basmati rice is globally recognized for its aroma and long grains.</li>
+            <li><strong>{t("wide_range")} : </strong> From luxury basmati to budget non-basmati, there’s a variety for every market.</li>
+            <li><strong>{t("strong_export_network")} : </strong> India has a well-established supply chain ensuring timely delivery worldwide.</li>
           </ul>
           <h2 className="tw-text-xl tw-font-semibold tw-text-yellow-400 tw-mt-6 tw-mb-4">{t("conclusion")}</h2>
           <p>If you are planning to import rice from India, understanding the differences between rice varieties can help you select the right type for your target customers. While 1121, 1718, and 1401 Basmati serve the premium market, 1509 and PUSA Basmati cater to mid-segment buyers, and Sugandha, Taj, RH10, Sharbati, PR 11/14, and PR 106/47 provide cost-effective solutions for the mass market.</p>
@@ -124,8 +124,8 @@ const Blog = () => {
       image: rice_packing,
       content: (
         <>
-          <h2 className="tw-text-xl tw-font-semibold tw-text-yellow-400 tw-mt-6 tw-mb-4">Posted by SIEA</h2>
-          <h2 className="tw-text-xl tw-font-semibold tw-text-yellow-400 tw-mt-6 tw-mb-4">Table of Contents</h2>
+          <h2 className="tw-text-xl tw-font-semibold tw-text-yellow-400 tw-mt-6 tw-mb-4">{t("posted_by")}</h2>
+          <h2 className="tw-text-xl tw-font-semibold tw-text-yellow-400 tw-mt-6 tw-mb-4">{t("table_of_contents")}</h2>
           <ul className="tw-list-disc tw-pl-5 tw-mb-4">
             <li>{t("pp_woven_bags")}</li>
             <li>{t("non_woven_bags")}</li>
@@ -135,50 +135,50 @@ const Blog = () => {
           </ul>
           <h2 className="tw-text-xl tw-font-semibold tw-text-yellow-400 tw-mt-6 tw-mb-4">{t("pp_woven_bags")}</h2>
           <ul className="tw-list-disc tw-pl-5 tw-mb-4">
-            <li><strong>Structure:</strong> Made of woven polypropylene tapes.</li>
-            <li><strong>Strength:</strong> High tensile strength, tear resistant, good for heavy loads (5–50 kg).</li>
-            <li><strong>Moisture Resistance:</strong> Moderate, can allow some air exchange unless laminated.</li>
-            <li><strong>Printing:</strong> Flexographic printing possible, but limited graphics.</li>
-            <li><strong>Recyclability:</strong> Fully recyclable.</li>
-            <li><strong>Common Use:</strong> Standard bulk rice packaging (25/50 kg).</li>
+            <li><strong>{t("structure")} : </strong> Made of woven polypropylene tapes.</li>
+            <li><strong>{t("strength")} : </strong> High tensile strength, tear resistant, good for heavy loads (5–50 kg).</li>
+            <li><strong>{t("moisture_resistance")} : </strong> Moderate, can allow some air exchange unless laminated.</li>
+            <li><strong>{t("printing")} : </strong> Flexographic printing possible, but limited graphics.</li>
+            <li><strong>{t("recyclability")} : </strong> Fully recyclable.</li>
+            <li><strong>{t("common_use")} : </strong> Standard bulk rice packaging (25/50 kg).</li>
           </ul>
           <h2 className="tw-text-xl tw-font-semibold tw-text-yellow-400 tw-mt-6 tw-mb-4">{t("non_woven_bags")}</h2>
           <ul className="tw-list-disc tw-pl-5 tw-mb-4">
-            <li><strong>Structure:</strong> Fabric made from spun-bonded polypropylene fibers (not woven).</li>
-            <li><strong>Strength:</strong> Lighter weight, less tensile strength compared to woven PP.</li>
-            <li><strong>Moisture Resistance:</strong> Better than jute, but lower than laminated BOPP/LDPE.</li>
-            <li><strong>Printing:</strong> High-quality multicolor printing possible.</li>
-            <li><strong>Recyclability:</strong> Recyclable, considered more eco-friendly than plastic film bags.</li>
-            <li><strong>Common Use:</strong> Retail packs (5–10 kg), promotional packs.</li>
+            <li><strong>{t("structure")} : </strong> Fabric made from spun-bonded polypropylene fibers (not woven).</li>
+            <li><strong>{t("strength")} : </strong> Lighter weight, less tensile strength compared to woven PP.</li>
+            <li><strong>{t("moisture_resistance")} : </strong> Better than jute, but lower than laminated BOPP/LDPE.</li>
+            <li><strong>{t("printing")} : </strong> High-quality multicolor printing possible.</li>
+            <li><strong>{t("recyclability")} : </strong> Recyclable, considered more eco-friendly than plastic film bags.</li>
+            <li><strong>{t("common_use")} : </strong> Retail packs (5–10 kg), promotional packs.</li>
           </ul>
           <h2 className="tw-text-xl tw-font-semibold tw-text-yellow-400 tw-mt-6 tw-mb-4">{t("jute_bags")}</h2>
           <ul className="tw-list-disc tw-pl-5 tw-mb-4">
-            <li><strong>Structure:</strong> Natural fiber from jute plant, woven into fabric.</li>
-            <li><strong>Strength:</strong> Very strong, breathable, good for large capacities.</li>
-            <li><strong>Moisture Resistance:</strong> Poor against water, absorbs moisture.</li>
-            <li><strong>Printing:</strong> Limited to simple stenciling or basic ink printing.</li>
-            <li><strong>Recyclability:</strong> 100% biodegradable and compostable.</li>
-            <li><strong>Common Use:</strong> Traditional bulk packaging, premium or export branding where sustainability is emphasized.</li>
+            <li><strong>{t("structure")} : </strong> Natural fiber from jute plant, woven into fabric.</li>
+            <li><strong>{t("strength")} : </strong> Very strong, breathable, good for large capacities.</li>
+            <li><strong>{t("moisture_resistance")} : </strong> Poor against water, absorbs moisture.</li>
+            <li><strong>{t("printing")} : </strong> Limited to simple stenciling or basic ink printing.</li>
+            <li><strong>{t("recyclability")} : </strong> 100% biodegradable and compostable.</li>
+            <li><strong>{t("common_use")} : </strong> Traditional bulk packaging, premium or export branding where sustainability is emphasized.</li>
           </ul>
           <h2 className="tw-text-xl tw-font-semibold tw-text-yellow-400 tw-mt-6 tw-mb-4">{t("bopp_laminated_bags")}</h2>
           <ul className="tw-list-disc tw-pl-5 tw-mb-4">
-            <li><strong>Structure:</strong> PP woven bag laminated with a printed BOPP film layer.</li>
-            <li><strong>Strength:</strong> Combines strength of PP woven + barrier of BOPP film.</li>
-            <li><strong>Moisture Resistance:</strong> Excellent, protects against humidity and spillage.</li>
-            <li><strong>Printing:</strong> High-definition rotogravure printing (multicolor, photographic).</li>
-            <li><strong>Recyclability:</strong> Technically recyclable, though multilayer separation is a challenge.</li>
-            <li><strong>Common Use:</strong> Branded rice packaging (5–25 kg), retail and export markets.</li>
+            <li><strong>{t("structure")} : </strong> PP woven bag laminated with a printed BOPP film layer.</li>
+            <li><strong>{t("strength")} : </strong> Combines strength of PP woven + barrier of BOPP film.</li>
+            <li><strong>{t("moisture_resistance")} : </strong> Excellent, protects against humidity and spillage.</li>
+            <li><strong>{t("printing")} : </strong> High-definition rotogravure printing (multicolor, photographic).</li>
+            <li><strong>{t("recyclability")} : </strong> Technically recyclable, though multilayer separation is a challenge.</li>
+            <li><strong>{t("common_use")} : </strong> Branded rice packaging (5–25 kg), retail and export markets.</li>
           </ul>
           <h2 className="tw-text-xl tw-font-semibold tw-text-yellow-400 tw-mt-6 tw-mb-4">{t("ldpe_pouches")}</h2>
           <ul className="tw-list-disc tw-pl-5 tw-mb-4">
-            <li><strong>Structure:</strong> Film-based pouches made from LDPE, can be mono-layer or multi-layer.</li>
-            <li><strong>Strength:</strong> Flexible, but weaker mechanical strength compared to woven bags. Suited for smaller packs.</li>
-            <li><strong>Moisture Resistance:</strong> Excellent barrier to moisture and dust.</li>
-            <li><strong>Printing:</strong> High-quality multicolor printing possible.</li>
-            <li><strong>Recyclability:</strong> Recyclable depending on mono/multi-layer structure.</li>
-            <li><strong>Common Use:</strong> Retail packs (1–5 kg), vacuum packing, stand-up pouches.</li>
+            <li><strong>{t("structure")} : </strong> Film-based pouches made from LDPE, can be mono-layer or multi-layer.</li>
+            <li><strong>{t("strength")} : </strong> Flexible, but weaker mechanical strength compared to woven bags. Suited for smaller packs.</li>
+            <li><strong>{t("moisture_resistance")} : </strong> Excellent barrier to moisture and dust.</li>
+            <li><strong>{t("printing")} : </strong> High-quality multicolor printing possible.</li>
+            <li><strong>{t("recyclability")} : </strong> Recyclable depending on mono/multi-layer structure.</li>
+            <li><strong>{t("common_use")} : </strong> Retail packs (1–5 kg), vacuum packing, stand-up pouches.</li>
           </ul>
-          <h2 className="tw-text-xl tw-font-semibold tw-text-yellow-400 tw-mt-6 tw-mb-4">Summary</h2>
+          <h2 className="tw-text-xl tw-font-semibold tw-text-yellow-400 tw-mt-6 tw-mb-4">{t("summary")}</h2>
           <ul className="tw-list-disc tw-pl-5 tw-mb-4">
             <li><strong>PP woven:</strong> Best for bulk, economical.</li>
             <li><strong>Non-woven:</strong> Mid-range, light, attractive.</li>
@@ -186,11 +186,11 @@ const Blog = () => {
             <li><strong>BOPP laminated:</strong> Strong + best print quality, retail branding.</li>
             <li><strong>LDPE pouch:</strong> Small retail packs, strong moisture barrier.</li>
           </ul>
-          <h2 className="tw-text-xl tw-font-semibold tw-text-yellow-400 tw-mt-6 tw-mb-4">SUMMARY WITH COST LOGIC</h2>
+          <h2 className="tw-text-xl tw-font-semibold tw-text-yellow-400 tw-mt-6 tw-mb-4">{t("summary_with_cost_logic")}</h2>
           <ul className="tw-list-disc tw-pl-5 tw-mb-4">
-            <li><strong>Lowest cost:</strong> PP woven (bulk commodity packs).</li>
-            <li><strong>Mid cost:</strong> Non-woven & LDPE (retail focus).</li>
-            <li><strong>Premium:</strong> BOPP laminated (best branding) and Jute (eco-premium image).</li>
+            <li><strong>{t("lowest_cost")} : </strong> PP woven (bulk commodity packs).</li>
+            <li><strong>{t("mid_cost")} : </strong> Non-woven & LDPE (retail focus).</li>
+            <li><strong>{t("premium")} : </strong> BOPP laminated (best branding) and Jute (eco-premium image).</li>
           </ul>
         </>
       ),
@@ -213,13 +213,13 @@ const Blog = () => {
             <li>Depending on the steam intensity and drying method, the rice takes on a white or creamy/golden color.</li>
           </ul>
           <h2 className="tw-text-xl tw-font-semibold tw-text-yellow-400 tw-mt-6 tw-mb-4">{t("which_one_to_choose")}</h2>
-          <h3>Choose White Sella Basmati Rice if:</h3>
+          <h3>{t("choose_white_sella")}</h3>
           <ul className="tw-list-disc tw-pl-5 tw-mb-4">
             <li>You need rice for branded packaging or private labels</li>
             <li>Your market prefers bright, white grains with polished finish</li>
             <li>You’re targeting modern retailers and fine dining</li>
           </ul>
-          <h3>Choose Creamy Sella Basmati Rice if:</h3>
+          <h3>{t("choose_creamy_sella")}</h3>
           <ul className="tw-list-disc tw-pl-5 tw-mb-4">
             <li>You cater to traditional cuisines like biryani, pulao, or mandi</li>
             <li>You’re exporting to Gulf, East Africa, or Central Asia</li>
@@ -277,7 +277,7 @@ const Blog = () => {
             <li>Custom packaging & labeling per EU country requirements</li>
           </ul>
           <h2 className="tw-text-xl tw-font-semibold tw-text-yellow-400 tw-mt-6 tw-mb-4">{t("what_sets_skrm_apart")}</h2>
-          <h3>1. Infrastructure & Processing</h3>
+          <h3>1. {t("infrastructure_processing")}</h3>
           <ul className="tw-list-disc tw-pl-5 tw-mb-4">
             <li>In-house parboiling, steaming, drying, polishing & packaging units</li>
             <li>Fully automated Sortex & Grader lines</li>
@@ -285,7 +285,7 @@ const Blog = () => {
             <li>Separate EU-dedicated rice storage zones</li>
             <li>In-house lab for moisture, broken %, elongation, purity & aging verification</li>
           </ul>
-          <h3>2. Export Experience</h3>
+          <h3>2. {t("export_experience")}</h3>
           <ul className="tw-list-disc tw-pl-5 tw-mb-4">
             <li>100+ containers shipped annually to Germany, Netherlands, France, UK, Italy, Spain, Poland, and Czech Republic</li>
             <li>Direct export support from Nhava Sheva and Mundra ports</li>
@@ -341,13 +341,13 @@ const Blog = () => {
             <li>In North America and Europe, Light Steam (also known as White Steam) is favored for its clean appearance and suitability in retail and modern trade.</li>
           </ul>
           <h2 className="tw-text-xl tw-font-semibold tw-text-yellow-400 tw-mt-6 tw-mb-4">{t("when_to_choose")}</h2>
-          <h3>Choose Light Steam Basmati if:</h3>
+          <h3>{t("choose_light_steam")}</h3>
           <ul className="tw-list-disc tw-pl-5 tw-mb-4">
             <li>You target modern retail, supermarkets, or private labels</li>
             <li>Your buyers prefer whiter rice with polished grain</li>
             <li>You focus on ready-to-cook products or shorter cooking time</li>
           </ul>
-          <h3>Choose Dark Steam Basmati if:</h3>
+          <h3>{t("choose_dark_steam")}</h3>
           <ul className="tw-list-disc tw-pl-5 tw-mb-4">
             <li>You supply to bulk buyers, restaurants, or catering services</li>
             <li>Your customers value strong aroma, firm grain, and traditional appearance</li>

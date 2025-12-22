@@ -126,24 +126,24 @@ const JoinUs = () => {
     }
 
     // Send to WhatsApp
-    const whatsappNumber = '919247485871';
+    const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER;
     const message = `
-*${type}*
+                  *${type}*
 
-*Personal Details:*
-Name: ${submissionData.name}
-Email: ${submissionData.email}
-Phone: ${submissionData.phone}
-${submissionData.company ? `Company: ${submissionData.company}` : ''}
+                  *Personal Details:*
+                  Name: ${submissionData.name}
+                  Email: ${submissionData.email}
+                  Phone: ${submissionData.phone}
+                  ${submissionData.company ? `Company: ${submissionData.company}` : ''}
 
-*Business Details:*
-${Object.entries(submissionData)
+                  *Business Details:*
+                  ${Object.entries(submissionData)
         .filter(([key]) => !['name', 'email', 'phone', 'company'].includes(key))
         .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}: ${value}`)
         .join('\n')}
 
-*Submitted On:* ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
-    `.trim();
+                  *Submitted On:* ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
+                      `.trim();
 
     const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');

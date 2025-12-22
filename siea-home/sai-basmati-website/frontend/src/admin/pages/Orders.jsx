@@ -473,12 +473,12 @@ export default function Orders() {
               )}
 
               <div className="tw-flex tw-justify-end tw-gap-4 tw-pt-4">
-<button
-  onClick={() => handleOpenUpdate(viewingOrder)}
-  className="tw-bg-yellow-500 hover:tw-bg-yellow-600 tw-text-black tw-px-6 tw-py-2 tw-rounded-lg"
->
-  Update Status
-</button>
+                <button
+                  onClick={() => handleOpenUpdate(viewingOrder)}
+                  className="tw-bg-yellow-500 hover:tw-bg-yellow-600 tw-text-black tw-px-6 tw-py-2 tw-rounded-lg"
+                >
+                  Update Status
+                </button>
                 <button
                   onClick={closeAllModals}
                   className="tw-bg-gray-800 hover:tw-bg-gray-700 tw-text-white tw-px-6 tw-py-2 tw-rounded-lg"
@@ -520,13 +520,13 @@ export default function Orders() {
             </div>
 
             <div className="tw-flex tw-justify-end tw-gap-3">
-<button
-  onClick={closeAllModals}
-  className="tw-bg-gray-800 hover:tw-bg-gray-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-lg"
-  disabled={updating}
->
-  Cancel
-</button>
+              <button
+                onClick={closeAllModals}
+                className="tw-bg-gray-800 hover:tw-bg-gray-700 tw-text-white tw-px-4 tw-py-2 tw-rounded-lg"
+                disabled={updating}
+              >
+                Cancel
+              </button>
               <button onClick={handleStatusUpdate} className="tw-bg-yellow-500 hover:tw-bg-yellow-600 tw-text-black tw-px-6 tw-py-2 tw-rounded-lg" disabled={updating || !updateStatus}>
                 {updating ? "Updating..." : "Update Status"}
               </button>

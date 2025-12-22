@@ -125,8 +125,8 @@ export default function App() {
   const showWarning = () => setShowWarningPopup(true);
 
   const searchProducts = (value) => {
-  setSearchQuery(value);
-};
+    setSearchQuery(value);
+  };
 
 
   const goHome = () => navigate("/");

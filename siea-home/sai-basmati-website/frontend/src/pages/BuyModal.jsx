@@ -115,32 +115,32 @@ const BuyModal = ({ isOpen, onClose, product, profile }) => {
 
   // CORRECTED: Fetch grades from /products/{productId}/grades
   // CORRECTED: Fetch grades from /products/{firebaseId}/grades
-useEffect(() => {
-  if (!product?.firebaseId) return;
+  useEffect(() => {
+    if (!product?.firebaseId) return;
 
-  const productRef = ref(db, `products/${product.firebaseId}/grades`);
+    const productRef = ref(db, `products/${product.firebaseId}/grades`);
 
-  const unsubscribe = onValue(productRef, (snap) => {
-    if (snap.exists()) {
-      const gradesData = snap.val();
-      const gradesArray = Object.keys(gradesData).map(key => ({
-        id: key,
-        ...gradesData[key]
-      }));
+    const unsubscribe = onValue(productRef, (snap) => {
+      if (snap.exists()) {
+        const gradesData = snap.val();
+        const gradesArray = Object.keys(gradesData).map(key => ({
+          id: key,
+          ...gradesData[key]
+        }));
 
-      const gradeNames = gradesArray.map(g => g.grade).filter(Boolean);
-      const selectedGradeObj = gradesArray.find(g => g.grade === grade);
+        const gradeNames = gradesArray.map(g => g.grade).filter(Boolean);
+        const selectedGradeObj = gradesArray.find(g => g.grade === grade);
 
-      setGrades(gradeNames);
-      setLiveGradePricePerKg(selectedGradeObj?.price_inr_per_kg || selectedGradeObj?.price_inr || 0);
-    } else {
-      setGrades([]);
-      setLiveGradePricePerKg(0);
-    }
-  });
+        setGrades(gradeNames);
+        setLiveGradePricePerKg(selectedGradeObj?.price_inr_per_kg || selectedGradeObj?.price_inr || 0);
+      } else {
+        setGrades([]);
+        setLiveGradePricePerKg(0);
+      }
+    });
 
-  return () => unsubscribe();
-}, [product?.firebaseId, grade]); // Depend on firebaseId, not product.id
+    return () => unsubscribe();
+  }, [product?.firebaseId, grade]); // Depend on firebaseId, not product.id
 
 
   // Profile pre-fill
@@ -309,7 +309,8 @@ useEffect(() => {
         ...quoteData,
       });
 
-      window.open(`https://wa.me/+919247485871?text=${encodeURIComponent(message)}`, "_blank");
+      const WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER;
+      window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(message)}`, "_blank");
       setShowThankYou(true);
     } catch (err) {
       console.error(err);

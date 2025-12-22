@@ -120,7 +120,7 @@ export default function Navbar({ profile, handleLogout, onProfileClick = () => {
                 onClick={openSampleCourierForm}
                 className="tw-block tw-py-1 tw-text-yellow-400 hover:tw-text-yellow-300 hover:tw-underline tw-transition tw-duration-150 tw-font-medium"
               >
-                Sample Courier Service
+                {t("sample_courier_service")}
               </button>
             </li>
 

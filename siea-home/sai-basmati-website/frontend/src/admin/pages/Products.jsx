@@ -10,6 +10,8 @@ export default function ProductsAdmin() {
   const [form, setForm] = useState({});
   const [expandedGrades, setExpandedGrades] = useState({});
   const [selectedHistoryRecord, setSelectedHistoryRecord] = useState(null);
+  const addFormRef = React.useRef(null);
+
 
   const emptyProduct = {
     name: { en: "", hi: "", te: "", ur: "", es: "", fr: "" },
@@ -19,7 +21,18 @@ export default function ProductsAdmin() {
     category: "Basmati Rice",
     packs: [1, 5],
     grades: [],
+    hsn: "",
+    specs: {
+      grainLength: "",
+      moisture: "",
+      broken: "",
+      aroma: "",
+      color: "",
+      origin: "",
+      packing: ""
+    }
   };
+
 
   const calculatePriceRange = (grades) => {
     if (!grades || grades.length === 0) {
@@ -61,7 +74,13 @@ export default function ProductsAdmin() {
     if (product === "new") {
       setEditing("new");
       setForm({ ...emptyProduct });
-    } else {
+
+      // ✅ scroll to top smoothly
+      setTimeout(() => {
+        addFormRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
+    else {
       setEditing(product.id);
       const calculatedPrice = product.grades && product.grades.length > 0
         ? calculatePriceRange(product.grades)
@@ -778,6 +797,33 @@ export default function ProductsAdmin() {
       </div>
     );
   };
+  const renderSpecsEditor = () => (
+    <div style={{
+      marginTop: 16,
+      padding: 16,
+      background: "#1a1a1a",
+      borderRadius: 10,
+      border: "1px dashed #444"
+    }}>
+      <h4 style={{ marginBottom: 12 }}>📋 Product Specifications</h4>
+
+      {Object.entries(form.specs || {}).map(([key, value]) => (
+        <input
+          key={key}
+          placeholder={key.replace(/([A-Z])/g, " $1")}
+          value={value}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              specs: { ...form.specs, [key]: e.target.value }
+            })
+          }
+          style={{ ...inputStyle, marginBottom: 8 }}
+        />
+      ))}
+    </div>
+  );
+
 
   return (
     <div style={{
@@ -874,59 +920,54 @@ export default function ProductsAdmin() {
                   }}
                 />
 
+
+
                 <div style={{ flex: 1, minWidth: 0 }}>
                   {editing === p.id ? (
                     <>
                       <input
                         value={form.name?.en || ""}
-                        onChange={(e) => setForm({ ...form, name: { ...form.name, en: e.target.value } })}
+                        onChange={(e) =>
+                          setForm({ ...form, name: { ...form.name, en: e.target.value } })
+                        }
                         style={inputStyle}
                         placeholder="Product Name (EN)"
                       />
-                      <div style={{
-                        margin: "10px 0",
-                        padding: 10,
-                        background: "#222",
-                        borderRadius: 6,
-                        border: "1px solid #555",
-                        fontSize: "14px"
-                      }}>
-                        <div style={{ fontSize: 12, color: "#aaa", marginBottom: 4 }}>
-                          📊 Calculated Price (from grades):
-                        </div>
-                        <div style={{ fontSize: 16, fontWeight: "bold", color: "#FFD700" }}>
-                          {form.price}
-                        </div>
-                      </div>
+
+                      {/* ✅ HSN INPUT — EDIT MODE ONLY */}
+                      <input
+                        placeholder="HSN Code"
+                        value={form.hsn || ""}
+                        onChange={(e) => setForm({ ...form, hsn: e.target.value })}
+                        style={inputStyle}
+                      />
                     </>
                   ) : (
+
                     <>
                       <h3 style={{
                         margin: 0,
                         color: "#FFD700",
-                        fontSize: "clamp(16px, 4vw, 20px)",
-                        wordBreak: "break-word"
+                        fontSize: "clamp(16px, 4vw, 20px)"
                       }}>
                         {p.name?.en || "No Name"}
                       </h3>
-                      <p style={{
-                        margin: "4px 0",
-                        color: "#aaa",
-                        fontSize: "14px",
-                        wordBreak: "break-word"
-                      }}>
+
+                      <p style={{ margin: "4px 0", color: "#aaa", fontSize: "14px" }}>
                         <strong>💰 Price:</strong> {p.price || "No price set"}
-                        {p.grades?.length > 0 && (
-                          <span style={{ fontSize: 12, color: "#888", marginLeft: 10 }}>
-                            ({p.grades.length} grade{p.grades.length !== 1 ? 's' : ''})
-                          </span>
-                        )}
                       </p>
+
+                      {/* ✅ THIS IS THE EXACT PLACE */}
+                      {p.hsn && (
+                        <p style={{ fontSize: "13px", color: "#aaa", marginTop: 4 }}>
+                          <strong>HSN:</strong> {p.hsn}
+                        </p>
+                      )}
+
                       <p style={{
                         margin: "8px 0",
                         fontSize: "14px",
                         color: "#ccc",
-                        wordBreak: "break-word",
                         display: "-webkit-box",
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: "vertical",
@@ -936,6 +977,7 @@ export default function ProductsAdmin() {
                       </p>
                     </>
                   )}
+
                 </div>
 
                 {renderEditButtons(p)}
@@ -972,6 +1014,8 @@ export default function ProductsAdmin() {
                   {editing === p.id ? (
                     <div>
                       {renderPricePreview(form.grades)}
+                      {renderSpecsEditor()}
+
 
                       {form.grades?.length > 0 ? (
                         <div className="tw-overflow-x-auto">
@@ -1072,7 +1116,7 @@ export default function ProductsAdmin() {
 
         {/* Add New Product Form */}
         {editing === "new" && (
-          <div style={productCard}>
+          <div ref={addFormRef} style={productCard}>
             <h3 style={{ marginBottom: 20, fontSize: "20px" }}>➕ Add New Product</h3>
 
             <input
@@ -1082,7 +1126,20 @@ export default function ProductsAdmin() {
               style={inputStyle}
             />
 
+            <input
+              placeholder="HSN Code"
+              value={form.hsn || ""}
+              onChange={(e) => setForm({ ...form, hsn: e.target.value })}
+              style={inputStyle}
+            />
+
+
             {renderPricePreview(form.grades)}
+            {renderSpecsEditor()}
+
+
+
+
 
             <input
               placeholder="Image URL"

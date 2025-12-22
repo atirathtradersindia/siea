@@ -10,14 +10,15 @@ import {
 } from "firebase/database";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDrZPJbXvflEP4Gqw64CsGi0XO7mO-OdJw",
-  authDomain: "siea-reg-960b8.firebaseapp.com",
-  databaseURL: "https://siea-reg-960b8-default-rtdb.firebaseio.com",
-  projectId: "siea-reg-960b8",
-  storageBucket: "siea-reg-960b8.firebasestorage.app",
-  messagingSenderId: "624147907252",
-  appId: "1:624147907252:web:e06b133e1772b246eccde1"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
+
 
 const app =
   !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];

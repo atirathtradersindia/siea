@@ -263,8 +263,8 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
   if (!isOpen) return null;
 
   const allowScrollInside = (e) => {
-  e.stopPropagation();
-};
+    e.stopPropagation();
+  };
 
 
   return (
@@ -557,11 +557,11 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
               </div>
 
               {/* Orders List */}
-<div
-  className="tw-p-6 tw-max-h-[50vh] tw-overflow-y-auto"
-  onWheel={allowScrollInside}
-  onTouchMove={allowScrollInside}
->
+              <div
+                className="tw-p-6 tw-max-h-[50vh] tw-overflow-y-auto"
+                onWheel={allowScrollInside}
+                onTouchMove={allowScrollInside}
+              >
                 {ordersLoading ? (
                   <p className="tw-text-center tw-py-10 tw-text-gray-400">Loading orders...</p>
                 ) : filteredOrders.length === 0 ? (
@@ -657,11 +657,11 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
               </div>
 
               {/* Content */}
-<div
-  className="tw-p-6 tw-overflow-y-auto tw-max-h-[60vh]"
-  onWheel={allowScrollInside}
-  onTouchMove={allowScrollInside}
->
+              <div
+                className="tw-p-6 tw-overflow-y-auto tw-max-h-[60vh]"
+                onWheel={allowScrollInside}
+                onTouchMove={allowScrollInside}
+              >
                 {/* Status Bar */}
                 <div className="tw-mb-6 tw-p-4 tw-bg-gray-800 tw-rounded-lg">
                   <div className="tw-flex tw-justify-between tw-items-center">
