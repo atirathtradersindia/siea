@@ -9,7 +9,7 @@ import { ref, onValue } from "firebase/database";
 
 export default function Products() {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t,currentLang} = useLanguage();
 
   const [currency, setCurrency] = useState("INR");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -88,12 +88,17 @@ export default function Products() {
   };
 
   const getProductTitle = (product) => {
-    return product.name?.[t("lang")] || product.name?.en || "Premium Basmati Rice";
+    return product.name[currentLang] || product.name.en || "Premium Basmati Rice";
   };
 
   const getProductDesc = (product) => {
-    return product.desc?.[t("lang")] || product.desc?.en || t("premium_basmati_1121_desc");
-  };
+  return (
+    product.desc?.[currentLang] ||
+    product.desc?.en ||
+    t("premium_basmati_1121_desc")
+  );
+};
+
 
   return (
     <div className="tw-min-h-screen tw-w-full tw-py-8 sm:tw-py-12 tw-px-4 sm:tw-px-8 tw-flex tw-flex-col">
@@ -140,7 +145,7 @@ export default function Products() {
             >
               <img
                 src={getProductImage(product)}
-                className="tw-w-full tw-h-40 tw-object-fill tw-rounded-t-2xl"
+                className="tw-w-full tw-h-40 tw-object-cover tw-rounded-t-2xl"
                 alt={getProductTitle(product)}
                 onError={(e) => {
                   e.target.src = "./img/default_rice.jpg"; // fallback if broken
