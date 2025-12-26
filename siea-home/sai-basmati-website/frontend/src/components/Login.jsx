@@ -214,7 +214,7 @@ export default function Login({ setProfile }) {
         <h1 className="login-title">{t("login")}</h1>
 
         {/* Quick Admin Login Buttons (for testing - remove in production) */}
-        <div className="quick-admin-buttons" style={{
+        {/* <div className="quick-admin-buttons" style={{
           marginBottom: '20px',
           textAlign: 'center',
           padding: '10px',
@@ -256,7 +256,7 @@ export default function Login({ setProfile }) {
               Admin 2
             </button>
           </div>
-        </div>
+        </div> */}
 
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="input-group">
@@ -307,7 +307,7 @@ export default function Login({ setProfile }) {
         </p>
 
         {/* Admin Login Note */}
-        <div style={{
+        {/* <div style={{
           marginTop: '20px',
           padding: '10px',
           backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -317,7 +317,7 @@ export default function Login({ setProfile }) {
           <p style={{ fontSize: '12px', color: '#9ca3af' }}>
             Admin users will be redirected to admin dashboard automatically.
           </p>
-        </div>
+        </div> */}
       </div>
     </div>
   );
