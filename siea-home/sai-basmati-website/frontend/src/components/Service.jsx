@@ -89,25 +89,25 @@ const quantityOptions = [
 
 const Service = React.memo(() => {
   const { t } = useLanguage();
-  
+
   // UI state
   const [selectedService, setSelectedService] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [shippingMethod, setShippingMethod] = useState("airways");
-  
+
   // Split form state to reduce re-renders
   const [contactInfo, setContactInfo] = useState({
     name: "", company: "", email: "", phone: "", countryCode: "+91"
   });
-  
+
   const [address, setAddress] = useState({
-    doorNo: "", area: "", town: "", city: "", district: "", 
+    doorNo: "", area: "", town: "", city: "", district: "",
     pincode: "", landmark: ""
   });
-  
+
   const [selectedItems, setSelectedItems] = useState([]);
   const [submitted, setSubmitted] = useState(false);
-  
+
   const [phoneError, setPhoneError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [varietyOptions, setVarietyOptions] = useState([]);
@@ -119,20 +119,20 @@ const Service = React.memo(() => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [visibleProducts, setVisibleProducts] = useState(4);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://siea.onrender.com";
-  
+
   // Use refs for values that don't need to trigger re-renders
   const resizeTimeoutRef = useRef(null);
   const animationFrameRef = useRef(null);
-  
+
   // Mobile detection with debouncing
   useEffect(() => {
     const handleResize = () => {
       if (resizeTimeoutRef.current) {
         clearTimeout(resizeTimeoutRef.current);
       }
-      
+
       resizeTimeoutRef.current = setTimeout(() => {
         const mobile = window.innerWidth < 768;
         if (mobile !== isMobile) {
@@ -140,54 +140,54 @@ const Service = React.memo(() => {
         }
       }, 200);
     };
-    
+
     window.addEventListener('resize', handleResize);
     return () => {
       if (resizeTimeoutRef.current) clearTimeout(resizeTimeoutRef.current);
       window.removeEventListener('resize', handleResize);
     };
   }, [isMobile]);
-  
+
   // Load products from Firebase (optimized)
   useEffect(() => {
     let mounted = true;
     setIsLoading(true);
-    
+
     const loadProducts = async () => {
       try {
         const snap = await get(ref(db, "products"));
         if (!mounted) return;
-        
+
         const val = snap.val() || {};
-        
+
         // Use requestAnimationFrame for non-blocking UI updates
         animationFrameRef.current = requestAnimationFrame(() => {
           if (!mounted) return;
-          
+
           // Simplified processing
           const list = [];
           const varietiesSet = new Set();
           const gmap = {};
-          
+
           Object.keys(val).forEach((key, index) => {
             const prod = val[key];
             if (!prod) return;
-            
+
             // Process in chunks for better performance
             if (index % 10 === 0) {
               // Yield to UI thread
-              setTimeout(() => {}, 0);
+              setTimeout(() => { }, 0);
             }
-            
-            const varietyName = 
+
+            const varietyName =
               safeString(prod.name) ||
               safeString(prod.productName) ||
               safeString(prod.variety) ||
               `Product ${key}`;
-            
+
             list.push({ key, ...prod });
             varietiesSet.add(varietyName);
-            
+
             // Simplified grade processing
             const grades = prod.grades || prod.grade || [];
             if (Array.isArray(grades) && grades.length) {
@@ -207,28 +207,28 @@ const Service = React.memo(() => {
               }];
             }
           });
-          
+
           const varietiesArr = Array.from(varietiesSet);
           setProductsRaw(list);
           setVarietyOptions(varietiesArr);
           setGradeMap(gmap);
-          
+
           // Set first category
           if (varietiesArr.length > 0 && !selectedCategory) {
             setSelectedCategory(varietiesArr[0]);
           }
-          
+
           setIsLoading(false);
         });
-        
+
       } catch (err) {
         console.error("Failed to load products:", err);
         if (mounted) setIsLoading(false);
       }
     };
-    
+
     loadProducts();
-    
+
     return () => {
       mounted = false;
       if (animationFrameRef.current) {
@@ -239,14 +239,14 @@ const Service = React.memo(() => {
       }
     };
   }, []);
-  
+
   // Calculate shipping charges
   const calculateShippingCharges = useMemo(() => {
     const isInternational = contactInfo.countryCode !== "+91";
     const charges = isInternational ? shippingCharges.international : shippingCharges.india;
     return charges[shippingMethod] || 0;
   }, [contactInfo.countryCode, shippingMethod]);
-  
+
   // Calculate item price
   const calculateItemPrice = useCallback(
     (variety, grade, quantityValue) => {
@@ -260,7 +260,7 @@ const Service = React.memo(() => {
     },
     [gradeMap]
   );
-  
+
   // Calculate total price
   const totalAmountINR = useMemo(() => {
     const riceTotal = selectedItems.reduce((total, item) => {
@@ -268,7 +268,7 @@ const Service = React.memo(() => {
     }, 0);
     return riceTotal + calculateShippingCharges;
   }, [selectedItems, calculateShippingCharges, calculateItemPrice]);
-  
+
   // Currency conversion
   const convertToLocalCurrency = useCallback((amountINR) => {
     const currencyInfo = CURRENCY_RATES[contactInfo.countryCode] || CURRENCY_RATES["+1"];
@@ -279,17 +279,17 @@ const Service = React.memo(() => {
       amountINR: amountINR
     };
   }, [contactInfo.countryCode]);
-  
+
   // Validate email
   const validateEmail = useCallback((email) => {
     const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return re.test((email || "").trim());
   }, []);
-  
+
   // Input handlers
   const handleContactChange = useCallback((e) => {
     const { name, value } = e.target;
-    
+
     if (name === "phone") {
       const digitsOnly = value.replace(/\D/g, "");
       const maxLength = countryCodeRules[contactInfo.countryCode]?.length || 10;
@@ -297,7 +297,7 @@ const Service = React.memo(() => {
       setContactInfo(prev => ({ ...prev, phone: digitsOnly }));
       return;
     }
-    
+
     if (name === "countryCode") {
       setContactInfo(prev => ({
         ...prev,
@@ -307,19 +307,19 @@ const Service = React.memo(() => {
       setPhoneError("");
       return;
     }
-    
+
     if (name === "email") {
       setContactInfo(prev => ({ ...prev, email: value }));
       setEmailError(value.trim() && !validateEmail(value) ? "Invalid email" : "");
       return;
     }
-    
+
     setContactInfo(prev => ({ ...prev, [name]: value }));
   }, [contactInfo.countryCode, validateEmail]);
-  
+
   const handleAddressChange = useCallback((e) => {
     const { name, value } = e.target;
-    
+
     if (name === "pincode") {
       let cleaned = value;
       if (contactInfo.countryCode === "+44") {
@@ -330,32 +330,32 @@ const Service = React.memo(() => {
       setAddress(prev => ({ ...prev, pincode: cleaned }));
       return;
     }
-    
+
     setAddress(prev => ({ ...prev, [name]: value }));
   }, [contactInfo.countryCode]);
-  
+
   // Toggle item selection
   const toggleItem = useCallback(
     (variety, grade) => {
       const key = `${variety}:::${grade}`;
       const exists = selectedItems.find((i) => i.key === key);
-      
+
       if (exists) {
         setSelectedItems(prev => prev.filter((i) => i.key !== key));
       } else {
         const price = calculateItemPrice(variety, grade, "1 kg");
-        setSelectedItems(prev => [...prev, { 
-          variety, 
-          grade, 
-          quantity: "1 kg", 
-          key, 
-          price 
+        setSelectedItems(prev => [...prev, {
+          variety,
+          grade,
+          quantity: "1 kg",
+          key,
+          price
         }]);
       }
     },
     [selectedItems, calculateItemPrice]
   );
-  
+
   // Update quantity
   const updateQuantity = useCallback(
     (key, newQuantity) => {
@@ -369,12 +369,12 @@ const Service = React.memo(() => {
     },
     [calculateItemPrice]
   );
-  
+
   // Remove item
   const removeItem = useCallback((key) => {
     setSelectedItems(prev => prev.filter((item) => item.key !== key));
   }, []);
-  
+
   // Save sample quote
   const saveSampleQuoteToFirebase = useCallback(async (payload) => {
     try {
@@ -384,42 +384,42 @@ const Service = React.memo(() => {
       console.error("Failed to save sample order:", err);
     }
   }, []);
-  
+
   // Validate all fields
   const allFieldsValid = useMemo(() => {
     const currentLength = countryCodeRules[contactInfo.countryCode]?.length || 10;
     const contactFields = ["name", "company", "phone", "email"];
     const addressFields = ["doorNo", "area", "town", "city", "district", "pincode"];
-    
+
     const contactValid = contactFields.every(f => contactInfo[f]?.trim());
     const addressValid = addressFields.every(f => address[f]?.trim());
     const phoneValid = contactInfo.phone.length === currentLength && !phoneError;
     const emailValid = validateEmail(contactInfo.email);
     const itemsValid = selectedItems.length > 0;
     const pincodeValid = address.pincode.length >= 4;
-    
+
     return contactValid && addressValid && phoneValid && emailValid && itemsValid && pincodeValid;
   }, [contactInfo, address, phoneError, selectedItems, validateEmail]);
-  
+
   // Send to WhatsApp
   const sendToWhatsApp = useCallback(
     async (currency = "INR", amount = null, paymentMethod = "Razorpay") => {
       const fullPhone = contactInfo.countryCode + contactInfo.phone;
       const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || "919247485871";
       const addressStr = `${address.doorNo}, ${address.area}, ${address.town}, ${address.city}, ${address.district} - ${address.pincode}${address.landmark ? ` (Landmark: ${address.landmark})` : ""}`;
-      
+
       const itemsList = selectedItems
         .map(
           (item, i) =>
             `${i + 1}. *Variety*: ${item.variety}\n   *Grade*: ${item.grade}\n   *Weight*: ${item.quantity}\n   *Price*: ₹${item.price.toFixed(2)}`
         )
         .join("\n\n");
-      
+
       const totalRicePrice = selectedItems.reduce((s, it) => s + Number(it.price || 0), 0);
       const shippingPrice = calculateShippingCharges;
       const totalAmount = totalRicePrice + shippingPrice;
       const paymentAmount = amount || `₹${totalAmount.toFixed(2)}`;
-      
+
       const message =
         `*Rice Sample Request - PAID*\n\n` +
         `*Samples*:\n${itemsList}\n\n` +
@@ -438,7 +438,7 @@ const Service = React.memo(() => {
         `*Payment Status*: Paid (${paymentAmount})\n` +
         `*Payment Method*: ${paymentMethod}\n` +
         `*Time*: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}`.trim();
-      
+
       // Save to firebase
       saveSampleQuoteToFirebase({
         type: "sample_courier",
@@ -458,27 +458,27 @@ const Service = React.memo(() => {
         timestamp: Date.now(),
         status: "Pending Dispatch",
       });
-      
+
       const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
       window.open(url, "_blank");
       alert("Payment Successful! Your sample request has been sent and saved.");
-      
+
       // Reset
       setContactInfo({
         name: "", company: "", email: "", phone: "", countryCode: "+91"
       });
       setAddress({
-        doorNo: "", area: "", town: "", city: "", district: "", 
+        doorNo: "", area: "", town: "", city: "", district: "",
         pincode: "", landmark: ""
       });
       setSelectedItems([]);
       setSubmitted(false);
-      
+
       return true;
     },
     [contactInfo, address, selectedItems, shippingMethod, calculateShippingCharges, saveSampleQuoteToFirebase]
   );
-  
+
   // Razorpay payment
   const startRazorpayPayment = useCallback(async () => {
     setSubmitted(true);
@@ -486,24 +486,24 @@ const Service = React.memo(() => {
       alert("Please fill all required fields correctly before making payment.");
       return;
     }
-    
+
     setPaymentLoading(true);
     setApiLoading(true);
-    
+
     try {
       const sdkLoaded = await loadRazorpay();
       if (!sdkLoaded) {
         alert("Payment SDK failed to load");
         return;
       }
-      
+
       const riceTotal = selectedItems.reduce((s, it) => s + Number(it.price || 0), 0);
       const shipping = calculateShippingCharges;
       const totalAmountINR = riceTotal + shipping;
-      
+
       // Always use INR for Razorpay
       const amount = Math.round(totalAmountINR * 100);
-      
+
       const orderRes = await fetch(`${API_BASE_URL}/create-razorpay-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -514,15 +514,15 @@ const Service = React.memo(() => {
           totalInr: totalAmountINR
         }),
       });
-      
+
       if (!orderRes.ok) {
         throw new Error(`Failed to create order: ${orderRes.status} ${orderRes.statusText}`);
       }
-      
+
       const data = await orderRes.json();
       if (!data.order || !data.order.id) throw new Error("Invalid order response from server");
       const order = data.order;
-      
+
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_RfSBzDny9nssx0",
         amount: order.amount,
@@ -547,7 +547,7 @@ const Service = React.memo(() => {
           },
         },
       };
-      
+
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (error) {
@@ -562,11 +562,11 @@ const Service = React.memo(() => {
       setApiLoading(false);
     }
   }, [API_BASE_URL, allFieldsValid, contactInfo, selectedItems, sendToWhatsApp, calculateShippingCharges, convertToLocalCurrency]);
-  
+
   const startPayment = useCallback(() => {
     startRazorpayPayment();
   }, [startRazorpayPayment]);
-  
+
   // Services list
   const servicesList = useMemo(
     () => [
@@ -579,11 +579,11 @@ const Service = React.memo(() => {
     ],
     []
   );
-  
+
   const serviceOptions = useMemo(() => [...Object.keys(otherServices), "Sample Courier Services"], []);
-  
+
   const toggleDropdown = useCallback(() => setIsDropdownOpen((s) => !s), []);
-  
+
   const handleServiceSelect = useCallback((service) => {
     setSelectedService(service);
     setIsDropdownOpen(false);
@@ -592,7 +592,7 @@ const Service = React.memo(() => {
         name: "", company: "", email: "", phone: "", countryCode: "+91"
       });
       setAddress({
-        doorNo: "", area: "", town: "", city: "", district: "", 
+        doorNo: "", area: "", town: "", city: "", district: "",
         pincode: "", landmark: ""
       });
       setSelectedItems([]);
@@ -601,24 +601,24 @@ const Service = React.memo(() => {
       setEmailError("");
     }
   }, []);
-  
+
   const showForm = selectedService === "Sample Courier Services";
-  
+
   // Payment button text
   const getPaymentButtonText = useCallback(() => {
     const localCurrency = convertToLocalCurrency(totalAmountINR);
-    
+
     if (contactInfo.countryCode === "+91") {
       return `Pay Now: ₹${totalAmountINR.toFixed(2)}`;
     } else {
       return `Pay Now: ${localCurrency.symbol}${localCurrency.amount.toFixed(2)} ${localCurrency.code}`;
     }
   }, [contactInfo.countryCode, totalAmountINR, convertToLocalCurrency]);
-  
+
   // Shipping options
   const shippingOptionsToShow = useMemo(() => {
     const localCurrency = convertToLocalCurrency(1);
-    
+
     if (contactInfo.countryCode === "+91") {
       return [
         { value: "airways", label: "Airways", info: `₹350`, localInfo: `₹350` },
@@ -643,10 +643,10 @@ const Service = React.memo(() => {
       ];
     }
   }, [contactInfo.countryCode, convertToLocalCurrency]);
-  
+
   // Current phone length
   const currentLength = countryCodeRules[contactInfo.countryCode]?.length || 10;
-  
+
   // Loading state
   if (isLoading) {
     return (
@@ -660,7 +660,7 @@ const Service = React.memo(() => {
       </div>
     );
   }
-  
+
   return (
     <>
       <section className="service-section">
@@ -668,7 +668,7 @@ const Service = React.memo(() => {
           <h1 className="tw-text-3xl tw-font-bold tw-text-yellow-400 tw-mb-8 tw-text-center service-heading">
             {t("our_services")}
           </h1>
-          
+
           {/* Services Grid */}
           <div className="service-grid">
             {servicesList.map((service, index) => (
@@ -685,11 +685,11 @@ const Service = React.memo(() => {
               </div>
             ))}
           </div>
-          
+
           {/* Other Services */}
           <div className="other-services-section tw-mt-16">
             <h2 className="tw-text-2xl tw-font-bold tw-text-yellow-400 tw-mb-6 tw-text-center">Other Services</h2>
-            
+
             {/* Service Dropdown */}
             <div className="service-dropdown-container tw-mb-8">
               <div className="relative tw-w-full tw-max-w-md tw-mx-auto">
@@ -704,9 +704,9 @@ const Service = React.memo(() => {
                 {isDropdownOpen && (
                   <div className="region-content tw-max-h-60 tw-overflow-y-auto">
                     {serviceOptions.map((serviceOpt, idx) => (
-                      <button 
-                        key={`${serviceOpt}-${idx}`} 
-                        onClick={() => handleServiceSelect(serviceOpt)} 
+                      <button
+                        key={`${serviceOpt}-${idx}`}
+                        onClick={() => handleServiceSelect(serviceOpt)}
                         className="dropdown-item"
                       >
                         {serviceOpt}
@@ -716,7 +716,7 @@ const Service = React.memo(() => {
                 )}
               </div>
             </div>
-            
+
             {/* Vendor List */}
             {selectedService && otherServices[selectedService] && selectedService !== "Sample Courier Services" && (
               <div className="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 lg:tw-grid-cols-3 tw-gap-8 tw-mt-12">
@@ -724,13 +724,13 @@ const Service = React.memo(() => {
                   const cleanNum = (vendor.contactNo || "").replace(/\D/g, "");
                   let phone = cleanNum.startsWith("91") && cleanNum.length > 10 ? cleanNum.slice(2) : cleanNum;
                   if (cleanNum.length > 10) phone = cleanNum.slice(-10);
-                  
+
                   const emailLink = vendor.email && vendor.email !== "N/A" ? `mailto:${vendor.email}` : null;
                   const callLink = phone.length >= 10 ? `tel:+91${phone}` : null;
-                  
+
                   const hasEmail = !!emailLink;
                   const hasPhone = !!callLink;
-                  
+
                   return (
                     <div
                       key={vendor.serialNo || vendor.partyName || Math.random()}
@@ -779,50 +779,50 @@ const Service = React.memo(() => {
                 })}
               </div>
             )}
-            
+
             {/* Sample Courier Form */}
             {showForm && (
               <div className={`tw-mt-16 tw-max-w-6xl tw-mx-auto tw-p-4 md:tw-p-10 ${isMobile ? 'tw-bg-black/90' : 'tw-bg-black/40 tw-backdrop-blur-xl'} tw-rounded-3xl tw-shadow-lg tw-border-4 tw-border-yellow-400 tw-relative`}>
                 <div className="tw-absolute tw-inset-0 tw-border-4 tw-border-yellow-500 tw-rounded-3xl tw-pointer-events-none tw-opacity-30"></div>
-                
+
                 <h4 className="tw-text-2xl md:tw-text-4xl tw-font-extrabold tw-text-yellow-400 tw-mb-6 md:tw-mb-10 tw-text-center">
                   Request Multiple Rice Samples
                 </h4>
-                
+
                 <div className="tw-space-y-6 md:tw-space-y-8">
                   {/* Contact Inputs */}
                   <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4 md:tw-gap-8">
                     <div>
-                      <input 
-                        type="text" 
-                        name="name" 
-                        placeholder="Your Name *" 
-                        value={contactInfo.name} 
+                      <input
+                        type="text"
+                        name="name"
+                        placeholder="Your Name *"
+                        value={contactInfo.name}
                         onChange={handleContactChange}
                         className="tw-w-full tw-px-4 md:tw-px-6 tw-py-3 md:tw-py-5 tw-rounded-xl md:tw-rounded-2xl tw-bg-black/60 tw-text-yellow-100 placeholder:tw-text-yellow-500 tw-border-2 tw-border-yellow-600 focus:tw-outline-none focus:tw-ring-2 md:focus:tw-ring-4 focus:tw-ring-yellow-400 tw-shadow"
                       />
                       {!contactInfo.name && submitted && <p className="tw-text-red-400 tw-text-xs md:tw-text-sm tw-mt-1 md:tw-mt-2">Required</p>}
                     </div>
                     <div>
-                      <input 
-                        type="text" 
-                        name="company" 
-                        placeholder="Company Name *" 
-                        value={contactInfo.company} 
+                      <input
+                        type="text"
+                        name="company"
+                        placeholder="Company Name *"
+                        value={contactInfo.company}
                         onChange={handleContactChange}
                         className="tw-w-full tw-px-4 md:tw-px-6 tw-py-3 md:tw-py-5 tw-rounded-xl md:tw-rounded-2xl tw-bg-black/60 tw-text-yellow-100 placeholder:tw-text-yellow-500 tw-border-2 tw-border-yellow-600 focus:tw-outline-none focus:tw-ring-2 md:focus:tw-ring-4 focus:tw-ring-yellow-400 tw-shadow"
                       />
                       {!contactInfo.company && submitted && <p className="tw-text-red-400 tw-text-xs md:tw-text-sm tw-mt-1 md:tw-mt-2">Required</p>}
                     </div>
                   </div>
-                  
+
                   <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4 md:tw-gap-8">
                     <div>
                       <div className="tw-flex tw-rounded-xl md:tw-rounded-2xl tw-overflow-hidden tw-border-2 tw-border-yellow-600">
-                        <select 
-                          name="countryCode" 
-                          value={contactInfo.countryCode} 
-                          onChange={handleContactChange} 
+                        <select
+                          name="countryCode"
+                          value={contactInfo.countryCode}
+                          onChange={handleContactChange}
                           className="tw-px-2 md:tw-px-3 tw-py-3 md:tw-py-5 tw-w-24 md:tw-w-32 tw-bg-black/70 tw-text-yellow-100 tw-border-r-2 tw-border-r-yellow-600 tw-outline-none tw-text-xs md:tw-text-sm"
                         >
                           {Object.keys(countryCodeRules).map(code => (
@@ -831,12 +831,12 @@ const Service = React.memo(() => {
                             </option>
                           ))}
                         </select>
-                        <input 
-                          type="tel" 
-                          name="phone" 
-                          placeholder={`Enter ${currentLength} digits *`} 
-                          value={contactInfo.phone} 
-                          onChange={handleContactChange} 
+                        <input
+                          type="tel"
+                          name="phone"
+                          placeholder={`Enter ${currentLength} digits *`}
+                          value={contactInfo.phone}
+                          onChange={handleContactChange}
                           maxLength={currentLength}
                           className="tw-flex-1 tw-px-4 md:tw-px-5 tw-py-3 md:tw-py-5 tw-bg-black/60 tw-text-yellow-100 placeholder:tw-text-yellow-500 tw-outline-none"
                         />
@@ -845,11 +845,11 @@ const Service = React.memo(() => {
                       {!contactInfo.phone && submitted && <p className="tw-text-red-400 tw-text-xs md:tw-text-sm tw-mt-1 md:tw-mt-2">Required</p>}
                     </div>
                     <div>
-                      <input 
-                        type="email" 
-                        name="email" 
-                        placeholder="Email Address *" 
-                        value={contactInfo.email} 
+                      <input
+                        type="email"
+                        name="email"
+                        placeholder="Email Address *"
+                        value={contactInfo.email}
                         onChange={handleContactChange}
                         className="tw-w-full tw-px-4 md:tw-px-6 tw-py-3 md:tw-py-5 tw-rounded-xl md:tw-rounded-2xl tw-bg-black/60 tw-text-yellow-100 placeholder:tw-text-yellow-500 tw-border-2 tw-border-yellow-600 focus:tw-outline-none focus:tw-ring-2 md:focus:tw-ring-4 focus:tw-ring-yellow-400 tw-shadow"
                       />
@@ -857,7 +857,7 @@ const Service = React.memo(() => {
                       {!contactInfo.email && submitted && <p className="tw-text-red-400 tw-text-xs md:tw-text-sm tw-mt-1 md:tw-mt-2">Required</p>}
                     </div>
                   </div>
-                  
+
                   {/* Shipping Method */}
                   <div className={`tw-p-4 md:tw-p-8 tw-rounded-xl md:tw-rounded-3xl tw-border-2 tw-border-yellow-600 ${isMobile ? 'tw-bg-black/80' : 'tw-bg-black/50 tw-backdrop-blur-lg'}`}>
                     <h5 className="tw-text-lg md:tw-text-xl tw-font-bold tw-text-yellow-400 tw-mb-4 md:tw-mb-6 tw-text-center">Shipping Method</h5>
@@ -865,13 +865,13 @@ const Service = React.memo(() => {
                       {shippingOptionsToShow.map((opt) => (
                         <div key={opt.value}>
                           <label className="tw-flex tw-items-center tw-space-x-3 md:tw-space-x-4 tw-cursor-pointer">
-                            <input 
-                              type="radio" 
-                              name="shippingMethod" 
-                              value={opt.value} 
-                              checked={shippingMethod === opt.value} 
-                              onChange={(e) => setShippingMethod(e.target.value)} 
-                              className="tw-w-4 md:tw-w-5 tw-h-4 md:tw-h-5 tw-text-yellow-400" 
+                            <input
+                              type="radio"
+                              name="shippingMethod"
+                              value={opt.value}
+                              checked={shippingMethod === opt.value}
+                              onChange={(e) => setShippingMethod(e.target.value)}
+                              className="tw-w-4 md:tw-w-5 tw-h-4 md:tw-h-5 tw-text-yellow-400"
                             />
                             <div className="tw-flex-1">
                               <span className="tw-text-yellow-100 tw-font-semibold tw-text-base md:tw-text-lg">{opt.label}</span>
@@ -887,61 +887,61 @@ const Service = React.memo(() => {
                       ))}
                     </div>
                   </div>
-                  
+
                   {/* Delivery Address */}
                   <div className={`tw-p-4 md:tw-p-8 tw-rounded-xl md:tw-rounded-3xl tw-border-2 tw-border-yellow-600 ${isMobile ? 'tw-bg-black/80' : 'tw-bg-black/50 tw-backdrop-blur-lg'}`}>
                     <h5 className="tw-text-lg md:tw-text-xl tw-font-bold tw-text-yellow-400 tw-mb-4 md:tw-mb-6 tw-text-center">Delivery Address</h5>
                     <div className="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 tw-gap-3 md:tw-gap-6">
                       <div>
-                        <input 
-                          type="text" 
-                          name="doorNo" 
-                          placeholder="Door No / Apt / Plot *" 
-                          value={address.doorNo} 
+                        <input
+                          type="text"
+                          name="doorNo"
+                          placeholder="Door No / Apt / Plot *"
+                          value={address.doorNo}
                           onChange={handleAddressChange}
                           className="tw-w-full tw-px-4 md:tw-px-5 tw-py-2 md:tw-py-4 tw-rounded-lg md:tw-rounded-xl tw-bg-black/60 tw-text-yellow-100 placeholder:tw-text-yellow-500 tw-border tw-border-yellow-700 focus:tw-outline-none focus:tw-ring-2 md:focus:tw-ring-4 focus:tw-ring-yellow-400"
                         />
                         {!address.doorNo && submitted && <p className="tw-text-red-400 tw-text-xs tw-mt-1">Required</p>}
                       </div>
                       <div>
-                        <input 
-                          type="text" 
-                          name="area" 
-                          placeholder="Area / Street / Locality *" 
-                          value={address.area} 
+                        <input
+                          type="text"
+                          name="area"
+                          placeholder="Area / Street / Locality *"
+                          value={address.area}
                           onChange={handleAddressChange}
                           className="tw-w-full tw-px-4 md:tw-px-5 tw-py-2 md:tw-py-4 tw-rounded-lg md:tw-rounded-xl tw-bg-black/60 tw-text-yellow-100 placeholder:tw-text-yellow-500 tw-border tw-border-yellow-700 focus:tw-outline-none focus:tw-ring-2 md:focus:tw-ring-4 focus:tw-ring-yellow-400"
                         />
                         {!address.area && submitted && <p className="tw-text-red-400 tw-text-xs tw-mt-1">Required</p>}
                       </div>
                       <div>
-                        <input 
-                          type="text" 
-                          name="town" 
-                          placeholder="Town / Suburb / Mandal *" 
-                          value={address.town} 
+                        <input
+                          type="text"
+                          name="town"
+                          placeholder="Town / Suburb / Mandal *"
+                          value={address.town}
                           onChange={handleAddressChange}
                           className="tw-w-full tw-px-4 md:tw-px-5 tw-py-2 md:tw-py-4 tw-rounded-lg md:tw-rounded-xl tw-bg-black/60 tw-text-yellow-100 placeholder:tw-text-yellow-500 tw-border tw-border-yellow-700 focus:tw-outline-none focus:tw-ring-2 md:focus:tw-ring-4 focus:tw-ring-yellow-400"
                         />
                         {!address.town && submitted && <p className="tw-text-red-400 tw-text-xs tw-mt-1">Required</p>}
                       </div>
                       <div>
-                        <input 
-                          type="text" 
-                          name="city" 
-                          placeholder="City *" 
-                          value={address.city} 
+                        <input
+                          type="text"
+                          name="city"
+                          placeholder="City *"
+                          value={address.city}
                           onChange={handleAddressChange}
                           className="tw-w-full tw-px-4 md:tw-px-5 tw-py-2 md:tw-py-4 tw-rounded-lg md:tw-rounded-xl tw-bg-black/60 tw-text-yellow-100 placeholder:tw-text-yellow-500 tw-border tw-border-yellow-700 focus:tw-outline-none focus:tw-ring-2 md:focus:tw-ring-4 focus:tw-ring-yellow-400"
                         />
                         {!address.city && submitted && <p className="tw-text-red-400 tw-text-xs tw-mt-1">Required</p>}
                       </div>
                       <div>
-                        <input 
-                          type="text" 
-                          name="district" 
-                          placeholder="District / County *" 
-                          value={address.district} 
+                        <input
+                          type="text"
+                          name="district"
+                          placeholder="District / County *"
+                          value={address.district}
                           onChange={handleAddressChange}
                           className="tw-w-full tw-px-4 md:tw-px-5 tw-py-2 md:tw-py-4 tw-rounded-lg md:tw-rounded-xl tw-bg-black/60 tw-text-yellow-100 placeholder:tw-text-yellow-500 tw-border tw-border-yellow-700 focus:tw-outline-none focus:tw-ring-2 md:focus:tw-ring-4 focus:tw-ring-yellow-400"
                         />
@@ -961,11 +961,11 @@ const Service = React.memo(() => {
                         {!address.pincode && submitted && <p className="tw-text-red-400 tw-text-xs tw-mt-1">Required</p>}
                       </div>
                       <div className="sm:tw-col-span-2">
-                        <input 
-                          type="text" 
-                          name="landmark" 
-                          placeholder="Landmark / Nearby Place (Optional)" 
-                          value={address.landmark} 
+                        <input
+                          type="text"
+                          name="landmark"
+                          placeholder="Landmark / Nearby Place (Optional)"
+                          value={address.landmark}
                           onChange={handleAddressChange}
                           className="tw-w-full tw-px-4 md:tw-px-5 tw-py-2 md:tw-py-4 tw-rounded-lg md:tw-rounded-xl tw-bg-black/60 tw-text-yellow-100 placeholder:tw-text-yellow-500 tw-border tw-border-yellow-700 focus:tw-outline-none focus:tw-ring-2 md:focus:tw-ring-4 focus:tw-ring-yellow-400"
                         />
@@ -973,15 +973,15 @@ const Service = React.memo(() => {
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Sample Selection */}
                   <div className={`tw-p-4 md:tw-p-8 tw-rounded-xl md:tw-rounded-3xl tw-border-2 tw-border-yellow-500 ${isMobile ? 'tw-bg-black/80' : 'tw-bg-black/50 tw-backdrop-blur-lg'}`}>
                     <h5 className="tw-text-xl md:tw-text-2xl tw-font-bold tw-text-yellow-400 tw-mb-4 md:tw-mb-6 tw-text-center">Select Samples & Quantity</h5>
-                    
+
                     {/* Category Tabs */}
                     <div className="tw-mb-6 md:tw-mb-8">
                       <div className="tw-flex tw-flex-wrap tw-gap-2 md:tw-gap-3 tw-justify-center tw-overflow-x-auto tw-pb-2">
-                        {varietyOptions.slice(0, isMobile ? 4 : varietyOptions.length).map((category) => (
+                        {varietyOptions.map((category) => (
                           <button
                             key={category}
                             onClick={() => {
@@ -991,14 +991,14 @@ const Service = React.memo(() => {
                             className={`tw-px-3 md:tw-px-5 tw-py-2 md:tw-py-3 tw-rounded-lg md:tw-rounded-xl tw-font-semibold tw-whitespace-nowrap tw-transition-all ${selectedCategory === category
                               ? "tw-bg-yellow-500 tw-text-black"
                               : "tw-bg-black/60 tw-text-yellow-300 hover:tw-bg-yellow-600 hover:tw-text-black"
-                            }`}
+                              }`}
                           >
-                            {category.length > 15 && isMobile ? `${category.slice(0, 12)}...` : category}
+                            {category.length > 15 && isMobile ? `${category.slice(0, 25)}` : category}
                           </button>
                         ))}
                       </div>
                     </div>
-                    
+
                     {/* Products Grid */}
                     <div className="tw-space-y-4 md:tw-space-y-6">
                       {selectedCategory && gradeMap[selectedCategory] && gradeMap[selectedCategory].length > 0 ? (
@@ -1014,14 +1014,14 @@ const Service = React.memo(() => {
                                 const pricePerKg = Number(gradeObj.price || 0);
                                 const localCurrency = convertToLocalCurrency(1);
                                 const localPricePerKg = pricePerKg * localCurrency.rate;
-                                
+
                                 return (
                                   <div
                                     key={`${selectedCategory}-${gradeName}-${index}`}
                                     className={`tw-rounded-lg md:tw-rounded-2xl tw-p-3 md:tw-p-5 tw-border-2 tw-transition-all tw-cursor-pointer ${isChecked
                                       ? "tw-border-yellow-400 tw-bg-yellow-900/30"
                                       : "tw-border-yellow-700 tw-bg-black/40 hover:tw-border-yellow-500"
-                                    }`}
+                                      }`}
                                     onClick={() => toggleItem(selectedCategory, gradeName)}
                                   >
                                     <div className="tw-flex tw-items-start tw-justify-between tw-mb-2 md:tw-mb-3">
@@ -1046,7 +1046,7 @@ const Service = React.memo(() => {
                                         )}
                                       </div>
                                     </div>
-                                    
+
                                     {isChecked && (
                                       <div className="tw-mt-3 md:tw-mt-4">
                                         <label className="tw-block tw-text-yellow-300 tw-text-xs md:tw-text-sm tw-mb-1 md:tw-mb-2">Select Quantity:</label>
@@ -1076,9 +1076,9 @@ const Service = React.memo(() => {
                                 );
                               })}
                           </div>
-                          
+
                           {isMobile && gradeMap[selectedCategory]?.length > visibleProducts && (
-                            <button 
+                            <button
                               onClick={() => setVisibleProducts(prev => prev + 4)}
                               className="tw-w-full tw-py-2 tw-bg-yellow-600 tw-text-black tw-font-semibold tw-rounded-lg"
                             >
@@ -1092,7 +1092,7 @@ const Service = React.memo(() => {
                         </div>
                       )}
                     </div>
-                    
+
                     {/* Selected Items */}
                     {selectedItems.length > 0 && (
                       <div className="tw-mt-6 md:tw-mt-10 tw-p-4 md:tw-p-6 tw-rounded-xl md:tw-rounded-2xl tw-border-2 tw-border-yellow-500 tw-bg-gradient-to-br tw-from-yellow-900/50 tw-to-black/70">
@@ -1111,7 +1111,7 @@ const Service = React.memo(() => {
                             Clear All
                           </button>
                         </div>
-                        
+
                         <div className="tw-space-y-3 md:tw-space-y-4">
                           {selectedItems.map((item) => {
                             const localCurrency = convertToLocalCurrency(item.price);
@@ -1147,7 +1147,7 @@ const Service = React.memo(() => {
                             );
                           })}
                         </div>
-                        
+
                         {/* Price Summary */}
                         <div className="tw-mt-4 md:tw-mt-8 tw-p-4 md:tw-p-6 tw-bg-black/50 tw-rounded-lg md:tw-rounded-xl tw-border tw-border-yellow-600">
                           <h6 className="tw-text-lg md:tw-text-xl tw-font-bold tw-text-yellow-300 tw-mb-3 md:tw-mb-4">Price Summary</h6>
@@ -1186,7 +1186,7 @@ const Service = React.memo(() => {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Payment Section */}
                   <div className={`tw-p-4 md:tw-p-8 tw-rounded-xl md:tw-rounded-3xl tw-border-2 tw-border-yellow-500 ${isMobile ? 'tw-bg-black/80' : 'tw-bg-black/50 tw-backdrop-blur-lg'}`}>
                     <h5 className="tw-text-lg md:tw-text-2xl tw-font-bold tw-text-yellow-400 tw-mb-4 md:tw-mb-6 tw-text-center">
@@ -1195,14 +1195,14 @@ const Service = React.memo(() => {
                         : `International Payment (${convertToLocalCurrency(1).name} → INR)`
                       }
                     </h5>
-                    
+
                     {apiLoading && (
                       <div className="tw-flex tw-items-center tw-justify-center tw-mb-3 md:tw-mb-4">
                         <div className="tw-w-5 md:tw-w-6 tw-h-5 md:tw-h-6 tw-border-2 tw-border-yellow-400 tw-border-t-transparent tw-rounded-full tw-animate-spin"></div>
                         <span className="tw-ml-2 tw-text-yellow-400 tw-text-sm md:tw-text-base">Creating order...</span>
                       </div>
                     )}
-                    
+
                     <button
                       onClick={startPayment}
                       disabled={!allFieldsValid || paymentLoading || apiLoading}
@@ -1222,7 +1222,7 @@ const Service = React.memo(() => {
                         </>
                       )}
                     </button>
-                    
+
                     {contactInfo.countryCode !== "+91" && (
                       <div className="tw-mt-4 md:tw-mt-6 tw-p-4 md:tw-p-6 tw-bg-black/40 tw-rounded-lg md:tw-rounded-xl tw-border tw-border-blue-500">
                         <p className="tw-text-yellow-300 tw-text-center tw-font-semibold tw-mb-2 md:tw-mb-3 tw-text-sm md:tw-text-base">
@@ -1252,7 +1252,7 @@ const Service = React.memo(() => {
                       </div>
                     )}
                   </div>
-                  
+
                   {!allFieldsValid && submitted && (
                     <p className="tw-text-red-500 tw-text-center tw-font-bold tw-text-base md:tw-text-xl tw-mt-4 md:tw-mt-6 tw-animate-pulse">
                       Please fill ALL fields correctly to proceed with payment
@@ -1264,7 +1264,7 @@ const Service = React.memo(() => {
           </div>
         </div>
       </section>
-      
+
       {/* Mobile-specific styles */}
       <style>{`
         @media (max-width: 768px) {
