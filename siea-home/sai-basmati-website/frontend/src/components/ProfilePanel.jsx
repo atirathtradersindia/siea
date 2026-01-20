@@ -368,18 +368,20 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
         {/* Header */}
         <div className="tw-flex tw-items-center tw-p-5 tw-border-b tw-border-gray-700 tw-bg-gray-800/50 tw-sticky tw-top-0">
           <div className="tw-w-14 tw-h-14 tw-rounded-full tw-overflow-hidden tw-shadow-lg tw-ring-4 tw-ring-yellow-500">
-            {editData.avatar || profile?.avatar ? (
-              <img
-                src={editData.avatar || profile.avatar}
-                alt="Avatar"
-                className="tw-w-full tw-h-full tw-object-cover"
-              />
-            ) : (
-              <div className="tw-w-full tw-h-full tw-bg-gradient-to-br tw-from-green-500 tw-to-blue-500 tw-flex tw-items-center tw-justify-center tw-text-2xl tw-font-bold">
-                {getAvatarInitial()}
-              </div>
-            )}
-          </div>
+  {/* Check if we have a valid avatar to display */}
+  {(editData.avatar || profile?.avatar) && 
+   !getAvatarInitial() ? ( // getAvatarInitial returns null when we have valid avatar
+    <img
+      src={editData.avatar || profile.avatar}
+      alt="Avatar"
+      className="tw-w-full tw-h-full tw-object-cover"
+    />
+  ) : (
+    <div className="tw-w-full tw-h-full tw-bg-gradient-to-br tw-from-green-500 tw-to-blue-500 tw-flex tw-items-center tw-justify-center tw-text-2xl tw-font-bold">
+      {getDisplayName().charAt(0).toUpperCase()}
+    </div>
+  )}
+</div>
           <div className="tw-ml-4">
             <div className="tw-font-bold tw-text-lg tw-text-white">{getDisplayName()}</div>
             <div className="tw-text-sm tw-text-gray-300 tw-mt-1">{getDisplayEmail()}</div>
