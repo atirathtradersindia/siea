@@ -213,51 +213,6 @@ export default function Login({ setProfile }) {
         <img src={logo} alt={t("logo_alt_text")} className="login-logo" />
         <h1 className="login-title">{t("login")}</h1>
 
-        {/* Quick Admin Login Buttons (for testing - remove in production) */}
-        <div className="quick-admin-buttons" style={{
-          marginBottom: '20px',
-          textAlign: 'center',
-          padding: '10px',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          borderRadius: '8px'
-        }}>
-          <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
-            Quick Admin Login (Testing)
-          </p>
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-            <button
-              type="button"
-              onClick={() => quickAdminLogin(1)}
-              style={{
-                padding: '6px 12px',
-                backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                border: '1px solid #3b82f6',
-                borderRadius: '6px',
-                color: '#3b82f6',
-                fontSize: '12px',
-                cursor: 'pointer'
-              }}
-            >
-              Admin 1
-            </button>
-            <button
-              type="button"
-              onClick={() => quickAdminLogin(2)}
-              style={{
-                padding: '6px 12px',
-                backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                border: '1px solid #3b82f6',
-                borderRadius: '6px',
-                color: '#3b82f6',
-                fontSize: '12px',
-                cursor: 'pointer'
-              }}
-            >
-              Admin 2
-            </button>
-          </div>
-        </div>
-
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="input-group">
             <label>{t("email")}</label>
