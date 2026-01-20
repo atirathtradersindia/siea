@@ -157,7 +157,6 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
   }, [showOrdersPopup, profile?.email]);
 
   // Prevent background scroll
-  // Prevent background scroll (SAFE VERSION)
   useEffect(() => {
     const adminContainer = document.getElementById("admin-scroll-container");
 
@@ -233,8 +232,6 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
     setMessage({ type: "success", text: "Photo removed. Save to confirm." });
   };
 
-
-
   const handleSave = async () => {
     setIsLoading(true);
     setMessage({ type: "", text: "" });
@@ -245,10 +242,10 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
           ...profile,
           displayName: editData.name || profile.displayName || profile.email?.split("@")[0],
           fullName: editData.name || profile.fullName,
-          avatar: editData.avatar || "", // Make sure avatar is included
+          avatar: editData.avatar || "",
         };
 
-        setProfile(updatedProfile); // This should update Navbar
+        setProfile(updatedProfile);
         localStorage.setItem("profile", JSON.stringify(updatedProfile));
 
         setMessage({ type: "success", text: "Profile updated successfully!" });
@@ -258,7 +255,7 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
           fullName: editData.name || "",
           email: editData.email || auth.currentUser?.email || "",
           phone: editData.phone || "",
-          avatar: editData.avatar || "", // Make sure avatar is saved to Firebase
+          avatar: editData.avatar || "",
           street: editData.street || "",
           city: editData.city || "",
           addressState: editData.addressState || "",
@@ -267,12 +264,10 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
           createdAt: editData.createdAt || new Date().toISOString(),
         });
 
-        // CRITICAL FIX: Update ALL profile data, not just name and avatar
         const updatedProfile = {
           ...profile,
           fullName: editData.name,
           avatar: editData.avatar,
-          // Also include all other fields that might be missing
           email: editData.email || profile.email,
           phone: editData.phone || profile.phone,
           street: editData.street || profile.street,
@@ -283,7 +278,7 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
           customId: editData.customId || profile.customId,
         };
 
-        setProfile(updatedProfile); // This updates Navbar
+        setProfile(updatedProfile);
         localStorage.setItem("profile", JSON.stringify(updatedProfile));
 
         setMessage({ type: "success", text: "Profile updated successfully!" });
@@ -304,28 +299,17 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
     setShowOrderDetails(true);
   };
 
-  // In ProfilePanel.js, update the handleLogout function:
-
   const handleLogout = () => {
-    // Clear all local storage
     localStorage.clear();
     sessionStorage.clear();
 
-    // Sign out from Firebase
     auth.signOut().then(() => {
       console.log("User signed out successfully");
-
-      // Clear profile state
-      onLogout(); // This calls handleLogout from App.js
-
-      // Close profile panel
+      onLogout();
       onClose();
-
-      // Redirect to home
       window.location.href = "/";
     }).catch((error) => {
       console.error("Error signing out:", error);
-      // Still try to clear local state even if Firebase signout fails
       onLogout();
       onClose();
       window.location.href = "/";
@@ -340,13 +324,23 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
   const getDisplayEmail = () =>
     isDefaultAdmin ? profile.email || "" : editData.email || profile?.email || "";
 
+  // FIXED: getAvatarInitial function - no more getValidAvatar call
   const getAvatarInitial = () => {
     const name = getDisplayName();
-    // Always return initial if avatar is not valid
-    if (!getValidAvatar(editData.avatar) && !getValidAvatar(profile?.avatar)) {
-      return name.charAt(0).toUpperCase();
+    const currentAvatar = editData.avatar || profile?.avatar;
+    
+    // Check if we have a valid avatar
+    if (currentAvatar && currentAvatar.trim() !== '') {
+      // Check if it's a data URL or http URL
+      if (currentAvatar.startsWith('data:image/') || 
+          currentAvatar.startsWith('http://') || 
+          currentAvatar.startsWith('https://')) {
+        return null; // We have a valid avatar, return null (so JSX shows image)
+      }
     }
-    return null; // Return null if there's a valid avatar
+    
+    // No valid avatar, return initial
+    return name.charAt(0).toUpperCase();
   };
 
   if (!isOpen) return null;
@@ -368,20 +362,28 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
         {/* Header */}
         <div className="tw-flex tw-items-center tw-p-5 tw-border-b tw-border-gray-700 tw-bg-gray-800/50 tw-sticky tw-top-0">
           <div className="tw-w-14 tw-h-14 tw-rounded-full tw-overflow-hidden tw-shadow-lg tw-ring-4 tw-ring-yellow-500">
-  {/* Check if we have a valid avatar to display */}
-  {(editData.avatar || profile?.avatar) && 
-   !getAvatarInitial() ? ( // getAvatarInitial returns null when we have valid avatar
-    <img
-      src={editData.avatar || profile.avatar}
-      alt="Avatar"
-      className="tw-w-full tw-h-full tw-object-cover"
-    />
-  ) : (
-    <div className="tw-w-full tw-h-full tw-bg-gradient-to-br tw-from-green-500 tw-to-blue-500 tw-flex tw-items-center tw-justify-center tw-text-2xl tw-font-bold">
-      {getDisplayName().charAt(0).toUpperCase()}
-    </div>
-  )}
-</div>
+            {/* Check if we should show avatar or initial */}
+            {(editData.avatar || profile?.avatar) && getAvatarInitial() === null ? (
+              <img
+                src={editData.avatar || profile.avatar}
+                alt="Avatar"
+                className="tw-w-full tw-h-full tw-object-cover"
+                onError={(e) => {
+                  // If image fails to load, show initial
+                  e.target.style.display = 'none';
+                  const parent = e.target.parentNode;
+                  const fallbackDiv = document.createElement('div');
+                  fallbackDiv.className = 'tw-w-full tw-h-full tw-bg-gradient-to-br tw-from-green-500 tw-to-blue-500 tw-flex tw-items-center tw-justify-center tw-text-2xl tw-font-bold';
+                  fallbackDiv.textContent = getDisplayName().charAt(0).toUpperCase();
+                  parent.appendChild(fallbackDiv);
+                }}
+              />
+            ) : (
+              <div className="tw-w-full tw-h-full tw-bg-gradient-to-br tw-from-green-500 tw-to-blue-500 tw-flex tw-items-center tw-justify-center tw-text-2xl tw-font-bold">
+                {getDisplayName().charAt(0).toUpperCase()}
+              </div>
+            )}
+          </div>
           <div className="tw-ml-4">
             <div className="tw-font-bold tw-text-lg tw-text-white">{getDisplayName()}</div>
             <div className="tw-text-sm tw-text-gray-300 tw-mt-1">{getDisplayEmail()}</div>
@@ -484,7 +486,20 @@ export default function ProfilePanel({ isOpen, profile, setProfile, onClose, onL
                     <div className="tw-relative tw-w-32 tw-h-32 tw-mb-4">
                       <div className="tw-w-32 tw-h-32 tw-rounded-full tw-overflow-hidden tw-ring-4 tw-ring-yellow-400/50 tw-shadow-xl">
                         {editData.avatar ? (
-                          <img src={editData.avatar} alt="Profile" className="tw-w-full tw-h-full tw-object-cover" />
+                          <img 
+                            src={editData.avatar} 
+                            alt="Profile" 
+                            className="tw-w-full tw-h-full tw-object-cover"
+                            onError={(e) => {
+                              // If image fails to load, show initial
+                              e.target.style.display = 'none';
+                              const parent = e.target.parentNode;
+                              const fallbackDiv = document.createElement('div');
+                              fallbackDiv.className = 'tw-w-full tw-h-full tw-bg-gradient-to-br tw-from-green-500 tw-to-blue-500 tw-flex tw-items-center tw-justify-center tw-text-4xl tw-font-bold';
+                              fallbackDiv.textContent = editData.name ? editData.name.charAt(0).toUpperCase() : "?";
+                              parent.appendChild(fallbackDiv);
+                            }}
+                          />
                         ) : (
                           <div className="tw-w-full tw-h-full tw-bg-gradient-to-br tw-from-green-500 tw-to-blue-500 tw-flex tw-items-center tw-justify-center tw-text-4xl tw-font-bold">
                             {editData.name ? editData.name.charAt(0).toUpperCase() : "?"}
