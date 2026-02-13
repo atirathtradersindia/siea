@@ -4,7 +4,7 @@ import logoUrl from "../assets/logo.png";
 import { useLanguage } from "../contexts/LanguageContext";
 import { otherServices } from "../data/services";
 
-export default function Navbar({ profile, setProfile, handleLogout, onProfileClick = () => {} }) {
+export default function Navbar({ profile, setProfile, handleLogout, onProfileClick = () => { } }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
   const location = useLocation();
@@ -43,7 +43,7 @@ export default function Navbar({ profile, setProfile, handleLogout, onProfileCli
   const handleServiceSelect = (service) => {
     closeMenu();
     setIsServicesOpen(false);
-    
+
     // Navigate to service page with selected service
     navigate(`/service?service=${encodeURIComponent(service)}`, {
       state: { selectedService: service }
@@ -127,11 +127,24 @@ export default function Navbar({ profile, setProfile, handleLogout, onProfileCli
         </button>
 
         <div
-          className={`${menuOpen ? "tw-flex" : "tw-hidden"} tw-flex-col lg:tw-flex lg:tw-flex-row tw-w-full lg:tw-w-auto 
-          tw-bg-black/50 tw-backdrop-blur-md tw-rounded-xl tw-pt-4 lg:tw-pt-0 tw-gap-6 lg:tw-gap-8 
-          tw-items-start lg:tw-items-center tw-absolute lg:tw-relative tw-left-0 tw-right-0 tw-top-16 lg:tw-top-auto 
-          tw-z-40 tw-px-6 lg:tw-px-0 tw-shadow-lg lg:tw-shadow-none`}
+          className={`${menuOpen ? "tw-flex" : "tw-hidden"} 
+          tw-flex-col lg:tw-flex lg:tw-flex-row 
+          tw-w-full lg:tw-w-auto 
+          tw-bg-black/95 tw-backdrop-blur-md 
+          tw-rounded-xl tw-pt-4 lg:tw-pt-0 
+          tw-gap-6 lg:tw-gap-8 
+          tw-items-start lg:tw-items-center 
+          tw-absolute lg:tw-relative 
+          tw-left-0 tw-right-0 
+          tw-top-16 lg:tw-top-auto 
+          tw-z-50 tw-px-6 lg:tw-px-0 
+          tw-shadow-lg lg:tw-shadow-none
+
+          tw-max-h-[calc(100vh-4rem)] 
+          tw-overflow-y-auto
+        `}
         >
+
           <ul className="tw-flex tw-flex-col lg:tw-flex-row tw-gap-6 tw-w-full lg:tw-w-auto">
             <li>
               <NavLink end to="/" className={({ isActive }) => `tw-block tw-py-1 tw-text-yellow-400 hover:tw-text-yellow-300 hover:tw-underline tw-transition tw-duration-150 ${isActive ? "tw-text-white tw-font-medium" : ""}`} onClick={closeMenu}>
@@ -157,7 +170,7 @@ export default function Navbar({ profile, setProfile, handleLogout, onProfileCli
               </NavLink>
             </li>
 
-            <li 
+            <li
               className="tw-relative"
               onMouseEnter={handleMouseEnterServices}
               onMouseLeave={handleMouseLeaveServices}
@@ -172,9 +185,9 @@ export default function Navbar({ profile, setProfile, handleLogout, onProfileCli
                   </svg>
                 </div>
               </NavLink>
-              
+
               {isServicesOpen && (
-                <div 
+                <div
                   className="tw-absolute tw-left-0 tw-top-full tw-mt-2 tw-min-w-48 tw-bg-gray-900 tw-rounded-lg tw-shadow-xl tw-z-50"
                   onMouseEnter={() => {
                     if (servicesTimeoutRef.current) {
@@ -252,13 +265,13 @@ export default function Navbar({ profile, setProfile, handleLogout, onProfileCli
                         </div>
                       )}
                     </div>
-                    
+
                     <svg className="tw-w-4 tw-h-4 tw-text-yellow-400 tw-hidden sm:tw-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
                 </li>
-                
+
                 <li className="lg:tw-hidden">
                   <button
                     onClick={handleLocalLogout}
