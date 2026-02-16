@@ -12,13 +12,11 @@ const emptyForm = () => ({
   Container: "20FT",
   "Origin Port": "Mundra",
   "Destination Port": "",
-  Origin_FOB_Min: "",
-  Origin_FOB_Max: "",
-  Region_Grade_CIF_Min: "",
-  Region_Grade_CIF_Max: "",
-  Freight_USD: "",
-  Insurance_USD: "",
-  Port_Charges_USD: "",
+  Ex_Mill_Min: "",
+  Ex_Mill_Max: "",
+  Currency: "INR",
+  Unit: "MT",
+
 });
 
 const CIFRatesAdmin = () => {
@@ -90,8 +88,8 @@ const CIFRatesAdmin = () => {
     if (
       !form.Grade ||
       !form.Country ||
-      !form.Region_Grade_CIF_Min ||
-      !form.Region_Grade_CIF_Max
+      !form.Ex_Mill_Min ||
+      !form.Ex_Mill_Max
     ) {
       alert("Grade, Country and CIF are required");
       return;
@@ -205,22 +203,22 @@ const CIFRatesAdmin = () => {
             {[
               "Grade",
               "Country",
+              "Region",
               "Destination Port",
-              "Origin_FOB_Min",
-              "Origin_FOB_Max",
-              "Region_Grade_CIF_Min",
-              "Region_Grade_CIF_Max",
-            ].map(field => (
-              <input
-                key={field}
-                placeholder={field}
-                value={form[field] || ""}
-                onChange={e =>
-                  setForm({ ...form, [field]: e.target.value })
-                }
-                className="tw-bg-black tw-p-2 tw-rounded"
-              />
-            ))}
+              "Ex_Mill_Min",
+              "Ex_Mill_Max",
+            ]
+              .map(field => (
+                <input
+                  key={field}
+                  placeholder={field}
+                  value={form[field] || ""}
+                  onChange={e =>
+                    setForm({ ...form, [field]: e.target.value })
+                  }
+                  className="tw-bg-black tw-p-2 tw-rounded"
+                />
+              ))}
           </div>
 
           <div className="tw-flex tw-gap-3 tw-mt-4">
@@ -251,10 +249,8 @@ const CIFRatesAdmin = () => {
               <th className="tw-p-3">Grade</th>
               <th className="tw-p-3">Country</th>
               <th className="tw-p-3">Port</th>
-              <th className="tw-p-3">FOB Min</th>
-              <th className="tw-p-3">FOB Max</th>
-              <th className="tw-p-3">CIF Min</th>
-              <th className="tw-p-3">CIF Max</th>
+              <th className="tw-p-3">Ex Mill Min</th>
+              <th className="tw-p-3">Ex Mill Max</th>
               <th className="tw-p-3">Actions</th>
             </tr>
           </thead>
@@ -265,14 +261,9 @@ const CIFRatesAdmin = () => {
                 <td className="tw-p-3 tw-text-yellow-400">{r.Grade}</td>
                 <td className="tw-p-3">{r.Country}</td>
                 <td className="tw-p-3">{r["Destination Port"]}</td>
-                <td className="tw-p-3">${r.Origin_FOB_Min}</td>
-                <td className="tw-p-3">${r.Origin_FOB_Max}</td>
-                <td className="tw-p-3 tw-font-bold">
-                  ${r.Region_Grade_CIF_Min}
-                </td>
-                <td className="tw-p-3 tw-font-bold">
-                  ${r.Region_Grade_CIF_Max}
-                </td>
+                <td className="tw-p-3">₹{r.Ex_Mill_Min}</td>
+                <td className="tw-p-3">₹{r.Ex_Mill_Max}</td>
+
                 <td className="tw-p-3 tw-flex tw-gap-2">
                   <button
                     onClick={() => {

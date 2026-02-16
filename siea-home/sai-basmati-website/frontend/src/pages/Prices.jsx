@@ -290,19 +290,25 @@ const Prices = () => {
   };
 
   // Function to convert single price value from USD to selected currency
-  const convertSinglePrice = (priceInUSD) => {
-    if (!priceInUSD && priceInUSD !== 0) return "0";
+  const convertSinglePrice = (priceValue, priceCurrency = "USD") => {
+    if (!priceValue && priceValue !== 0) return "0";
 
-    const price = parseFloat(priceInUSD);
+    let price = parseFloat(priceValue);
     if (isNaN(price)) return "0";
 
-    const convertedPrice = price * exchangeRates[currency];
+    let valueInUSD;
 
-    if (convertedPrice === Math.floor(convertedPrice)) {
-      return convertedPrice.toFixed(0);
+    // If price is INR convert to USD first
+    if (priceCurrency === "INR") {
+      valueInUSD = price / exchangeRates.INR;
     } else {
-      return convertedPrice.toFixed(2);
+      valueInUSD = price;
     }
+
+    // Now convert USD to selected currency
+    const finalValue = valueInUSD * exchangeRates[currency];
+
+    return finalValue.toFixed(2);
   };
 
   // Get price adjustment factor based on packing
@@ -378,126 +384,155 @@ const Prices = () => {
 
     const basmatiItems = [];
     const nonBasmatiItems = [];
-
     const groupedByGrade = {};
 
     cifRatesData.forEach((item, dataIndex) => {
-      const grade = item.Grade || item.grade || "Unknown";
+
+      const grade = item.Grade || "Unknown";
       const gradeLower = grade.toLowerCase();
 
-      let isBasmati = basmatiRiceNames.some(name => gradeLower.includes(name));
+      const isBasmati = basmatiRiceNames.some(name =>
+        gradeLower.includes(name)
+      );
 
       if (!groupedByGrade[grade]) {
         groupedByGrade[grade] = {
-          grade: grade,
-          isBasmati: isBasmati,
+          grade,
+          isBasmati,
           items: []
         };
       }
 
-      let fobUSD, cifMinUSD, cifMaxUSD;
+      // -------- BASIC INFO FIRST (IMPORTANT ORDER) --------
+      const container = item.Container || "20' Container";
+      const destinationPort = item["Destination Port"] || "Jebel Ali";
+      const country = item.Country || "UAE";
+      const region = item.Region || "Middle East";
 
-      if (item.FOB_USD !== undefined) {
-        fobUSD = parseFloat(item.FOB_USD);
-      } else if (item.FOB !== undefined) {
-        fobUSD = parseFloat(item.FOB);
-      } else {
-        fobUSD = 0;
+      const countryLower = (country || "").toLowerCase().trim();
+      const portLower = (destinationPort || "").toLowerCase().trim();
+
+      // -------- EX-MILL --------
+      const exMillMin = parseFloat(item.Ex_Mill_Min || 0);
+      const exMillMax = parseFloat(item.Ex_Mill_Max || 0);
+
+      // -------- FOB (ExMill + 4000 INR) --------
+      const fobMinINR = exMillMin + 4000;
+      const fobMaxINR = exMillMax + 4000;
+
+      // -------- Convert FOB to USD --------
+      const fobMinUSD = fobMinINR / exchangeRates.INR;
+      const fobMaxUSD = fobMaxINR / exchangeRates.INR;
+
+      // -------- FREIGHT LOGIC --------
+      let freight = 0;
+
+      const regionLower = (region || "").toLowerCase().trim();
+
+      // -------- ASIA --------
+      if (regionLower.includes("asia")) {
+        freight = 20;
       }
 
-      cifMinUSD = parseFloat(item.Region_Grade_CIF_Min || item.CIF_USD || item.CIF || 0);
-      cifMaxUSD = parseFloat(item.Region_Grade_CIF_Max || item.CIF_USD || item.CIF || 0);
-
-      if (cifMinUSD && !cifMaxUSD) {
-        cifMaxUSD = cifMinUSD;
-      }
-      if (cifMaxUSD && !cifMinUSD) {
-        cifMinUSD = cifMaxUSD;
-      }
-      if (!cifMinUSD && !cifMaxUSD) {
-        cifMinUSD = 0;
-        cifMaxUSD = 0;
+      // -------- AFRICA --------
+      else if (regionLower.includes("africa")) {
+        freight = 40;
       }
 
-      const container = item.Container || item.container || "20' Container";
-      const destinationPort = item["Destination Port"] || item.destinationPort || item.Destination || "Jebel Ali";
-      const country = item.Country || item.country || "UAE";
-      const region = item.Region || item.region || "Middle East";
+      // -------- EUROPE --------
+      else if (regionLower.includes("europe")) {
+        freight = 60;
+      }
 
-      const matchesPort = selectedCifDestination.port === "All Ports" ||
+      // -------- USA / NORTH AMERICA --------
+      else if (
+        regionLower.includes("north america") ||
+        countryLower.includes("usa") ||
+        countryLower.includes("united states")
+      ) {
+        freight = 80;
+      }
+
+      // -------- GULF / MIDDLE EAST --------
+      else if (
+        regionLower.includes("middle east") ||
+        regionLower.includes("gulf")
+      ) {
+        if (portLower.includes("jebel ali")) {
+          freight = 15;
+        }
+        else if (countryLower.includes("saudi")) {
+          freight = 50;
+        }
+        else {
+          freight = 40;
+        }
+      }
+
+      // -------- CIF --------
+      const cifMinUSD = fobMinUSD + freight;
+      const cifMaxUSD = fobMaxUSD + freight;
+
+      const matchesPort =
+        selectedCifDestination.port === "All Ports" ||
         destinationPort === selectedCifDestination.port;
-      const matchesContainer = selectedCifDestination.container === "All Containers" ||
+
+      const matchesContainer =
+        selectedCifDestination.container === "All Containers" ||
         container === selectedCifDestination.container;
 
       if (matchesPort && matchesContainer) {
+
         const packingAdjustment = getPackingAdjustment(packing);
 
-        const adjustedFobUSD = fobUSD * packingAdjustment;
-        const adjustedCifMinUSD = cifMinUSD * packingAdjustment;
-        const adjustedCifMaxUSD = cifMaxUSD * packingAdjustment;
+        const adjustedFobMin = fobMinUSD * packingAdjustment;
+        const adjustedFobMax = fobMaxUSD * packingAdjustment;
 
-        const fobPrice = convertSinglePrice(adjustedFobUSD);
-        const cifMinPrice = convertSinglePrice(adjustedCifMinUSD);
-        const cifMaxPrice = convertSinglePrice(adjustedCifMaxUSD);
+        const adjustedCifMin = cifMinUSD * packingAdjustment;
+        const adjustedCifMax = cifMaxUSD * packingAdjustment;
 
-        const fobMin = item.Origin_FOB_Min ? convertSinglePrice(parseFloat(item.Origin_FOB_Min) * packingAdjustment) : fobPrice;
-        const fobMax = item.Origin_FOB_Max ? convertSinglePrice(parseFloat(item.Origin_FOB_Max) * packingAdjustment) : fobPrice;
+        const fobMinPrice = convertSinglePrice(adjustedFobMin, "USD");
+        const fobMaxPrice = convertSinglePrice(adjustedFobMax, "USD");
 
-        const fobPriceStr = fobMin === fobMax ? fobMin : `${fobMin}-${fobMax}`;
+        const cifMinPrice = convertSinglePrice(adjustedCifMin, "USD");
+        const cifMaxPrice = convertSinglePrice(adjustedCifMax, "USD");
 
-        let cifPriceStr;
-        if (cifMinPrice === cifMaxPrice || cifMaxPrice === "0") {
-          cifPriceStr = cifMinPrice;
-        } else {
-          cifPriceStr = `${cifMinPrice}-${cifMaxPrice}`;
-        }
+        const fobPriceStr =
+          fobMinPrice === fobMaxPrice
+            ? fobMinPrice
+            : `${fobMinPrice}-${fobMaxPrice}`;
+
+        const cifPriceStr =
+          cifMinPrice === cifMaxPrice
+            ? cifMinPrice
+            : `${cifMinPrice}-${cifMaxPrice}`;
 
         groupedByGrade[grade].items.push({
           type: grade,
-          destinationPort: destinationPort,
-          country: country,
-          region: region,
-          container: container,
-          originPort: item["Origin Port"] || item.originPort || "Mundra",
+          destinationPort,
+          country,
+          region,
+          container,
+          originPort: item["Origin Port"] || "Mundra",
           fobPrice: fobPriceStr,
           cifPrice: cifPriceStr,
-          fobUSD: fobUSD,
-          cifMinUSD: cifMinUSD,
-          cifMaxUSD: cifMaxUSD,
-          packing: packing,
-          packingAdjustment: packingAdjustment,
-          dataIndex: dataIndex
+          packing,
+          dataIndex
         });
       }
     });
 
-    Object.values(groupedByGrade).forEach(gradeGroup => {
-      if (gradeGroup.items.length > 0) {
-        if (gradeGroup.isBasmati) {
-          basmatiItems.push(gradeGroup);
-        } else {
-          nonBasmatiItems.push(gradeGroup);
-        }
+    Object.values(groupedByGrade).forEach(group => {
+      if (group.items.length > 0) {
+        if (group.isBasmati) basmatiItems.push(group);
+        else nonBasmatiItems.push(group);
       }
     });
 
-    if (basmatiItems.length === 0 && nonBasmatiItems.length === 0 && cifRatesData.length > 0) {
-      const firstItem = cifRatesData[0];
-      const firstDestinationPort = firstItem["Destination Port"] || firstItem.destinationPort || firstItem.Destination || "Jebel Ali";
-      const firstCountry = firstItem.Country || firstItem.country || "UAE";
-      const firstRegion = firstItem.Region || firstItem.region || "Middle East";
-      const firstContainer = firstItem.Container || firstItem.container || "20' Container";
-
-      setSelectedCifDestination({
-        port: firstDestinationPort,
-        country: firstCountry,
-        region: firstRegion,
-        container: firstContainer
-      });
-    }
-
     return { basmati: basmatiItems, nonBasmati: nonBasmatiItems };
   };
+
+
 
   if (loading) {
     return (
@@ -876,9 +911,9 @@ const Prices = () => {
                   const cifMinUSD = parseFloat(item.Region_Grade_CIF_Min || item.CIF_USD || item.CIF || 0) * packingAdjustment;
                   const cifMaxUSD = parseFloat(item.Region_Grade_CIF_Max || item.CIF_USD || item.CIF || 0) * packingAdjustment;
 
-                  const fobPrice = convertSinglePrice(fobUSD);
-                  const cifMinPrice = convertSinglePrice(cifMinUSD);
-                  const cifMaxPrice = convertSinglePrice(cifMaxUSD);
+                  const fobPrice = convertSinglePrice(fobUSD, item.Currency);
+                  const cifMinPrice = convertSinglePrice(cifMinUSD, item.Currency);
+                  const cifMaxPrice = convertSinglePrice(cifMaxUSD, item.Currency);
 
                   let cifPriceStr;
                   if (cifMinPrice === cifMaxPrice || cifMaxPrice === "0") {

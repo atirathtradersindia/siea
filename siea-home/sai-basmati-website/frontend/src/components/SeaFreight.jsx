@@ -17,6 +17,22 @@ const SeaFreight = () => {
     const [error, setError] = useState(null);
     const navigate = useNavigate();
 
+    const [exchangeRates, setExchangeRates] = useState({
+        USD: 1,
+        INR: 83.5
+    });
+
+    useEffect(() => {
+        const ratesRef = ref(db, "exchangeRates/rates");
+
+        onValue(ratesRef, (snapshot) => {
+            if (snapshot.exists()) {
+                setExchangeRates(snapshot.val());
+            }
+        });
+    }, []);
+
+
     // Fetch freight data from Firebase
     useEffect(() => {
         const fetchFreightData = () => {
@@ -65,8 +81,44 @@ const SeaFreight = () => {
             const country = item.Country;
             const port = item['Destination Port'];
             const container = item.Container || 'N/A';
-            const cifMin = item.Region_Grade_CIF_Min || 0;
-            const cifMax = item.Region_Grade_CIF_Max || 0;
+            const exMillMin = parseFloat(item.Ex_Mill_Min || 0);
+            const exMillMax = parseFloat(item.Ex_Mill_Max || 0);
+
+            const fobMinINR = exMillMin + 4000;
+            const fobMaxINR = exMillMax + 4000;
+
+            const fobMinUSD = fobMinINR / exchangeRates.INR;
+            const fobMaxUSD = fobMaxINR / exchangeRates.INR;
+
+
+            let freight = 0;
+
+            const regionLower = (region || "").toLowerCase();
+            const countryLower = (country || "").toLowerCase();
+            const portLower = (port || "").toLowerCase();
+
+            // Asia
+            if (regionLower.includes("asia")) {
+                freight = 20;
+            }
+            else if (regionLower.includes("africa")) {
+                freight = 40;
+            }
+            else if (regionLower.includes("europe")) {
+                freight = 60;
+            }
+            else if (regionLower.includes("north america") || countryLower.includes("usa")) {
+                freight = 80;
+            }
+            else if (regionLower.includes("middle east") || regionLower.includes("gulf")) {
+                if (portLower.includes("jebel ali")) freight = 15;
+                else if (countryLower.includes("saudi")) freight = 50;
+                else freight = 40;
+            }
+
+            const cifMin = fobMinUSD + freight;
+            const cifMax = fobMaxUSD + freight;
+
 
             if (!regionMap.has(region)) {
                 regionMap.set(region, {
@@ -294,7 +346,7 @@ const SeaFreight = () => {
                                                     <div style={styles.portNameContainer}>
                                                         <span style={styles.portListName}>{port.name}</span>
                                                     </div>
-                                                    
+
                                                     <div style={styles.priceContainer}>
                                                         {port.cifMin > 0 && port.cifMax > 0 ? (
                                                             <span style={styles.cifPriceRange}>
