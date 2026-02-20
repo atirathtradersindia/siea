@@ -10,41 +10,36 @@ export default function Navbar({ profile, setProfile, handleLogout, onProfileCli
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const servicesTimeoutRef = useRef(null);
 
-  // Get service options from your data
+  const servicesRef = useRef(null); // for click outside detection
+
   const serviceOptions = Object.keys(otherServices);
+  console.log('Service options:', serviceOptions); // verify data
 
+  // Close mobile menu & dropdown on route change
   useEffect(() => {
     setMenuOpen(false);
     setIsServicesOpen(false);
-    return () => {
-      if (servicesTimeoutRef.current) {
-        clearTimeout(servicesTimeoutRef.current);
-      }
-    };
   }, [location]);
 
-  const closeMenu = () => setMenuOpen(false);
-
-  const handleMouseEnterServices = () => {
-    if (servicesTimeoutRef.current) {
-      clearTimeout(servicesTimeoutRef.current);
+  // Click outside handler for services dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (isServicesOpen && servicesRef.current && !servicesRef.current.contains(event.target)) {
+        setIsServicesOpen(false);
+      }
     }
-    setIsServicesOpen(true);
-  };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isServicesOpen]);
 
-  const handleMouseLeaveServices = () => {
-    servicesTimeoutRef.current = setTimeout(() => {
-      setIsServicesOpen(false);
-    }, 200);
-  };
+  const closeMenu = () => setMenuOpen(false);
 
   const handleServiceSelect = (service) => {
     closeMenu();
     setIsServicesOpen(false);
-
-    // Navigate to service page with selected service
     navigate(`/service?service=${encodeURIComponent(service)}`, {
       state: { selectedService: service }
     });
@@ -66,14 +61,11 @@ export default function Navbar({ profile, setProfile, handleLogout, onProfileCli
     }
   };
 
-  // Get proper display name
   const getDisplayName = () => {
     if (!profile) return "";
-
     if (profile.isDefaultAdmin) {
       return profile.displayName || profile.email?.split("@")[0] || "Admin";
     }
-
     return (
       profile.fullName ||
       profile.displayName ||
@@ -82,13 +74,11 @@ export default function Navbar({ profile, setProfile, handleLogout, onProfileCli
     );
   };
 
-  // Get avatar initial letter
   const getAvatarInitial = () => {
     const name = getDisplayName();
     return name ? name.charAt(0).toUpperCase() : "?";
   };
 
-  // Logout handler for this component
   const handleLocalLogout = async () => {
     closeMenu();
     if (handleLogout) {
@@ -126,6 +116,7 @@ export default function Navbar({ profile, setProfile, handleLogout, onProfileCli
           </svg>
         </button>
 
+        {/* Mobile menu container - fixed overflow on desktop */}
         <div
           className={`${menuOpen ? "tw-flex" : "tw-hidden"} 
           tw-flex-col lg:tw-flex lg:tw-flex-row 
@@ -139,12 +130,9 @@ export default function Navbar({ profile, setProfile, handleLogout, onProfileCli
           tw-top-16 lg:tw-top-auto 
           tw-z-50 tw-px-6 lg:tw-px-0 
           tw-shadow-lg lg:tw-shadow-none
-
-          tw-max-h-[calc(100vh-4rem)] 
-          tw-overflow-y-auto
-        `}
+          tw-max-h-[calc(100vh-4rem)] lg:tw-max-h-none 
+          tw-overflow-y-auto lg:tw-overflow-visible`}
         >
-
           <ul className="tw-flex tw-flex-col lg:tw-flex-row tw-gap-6 tw-w-full lg:tw-w-auto">
             <li>
               <NavLink end to="/" className={({ isActive }) => `tw-block tw-py-1 tw-text-yellow-400 hover:tw-text-yellow-300 hover:tw-underline tw-transition tw-duration-150 ${isActive ? "tw-text-white tw-font-medium" : ""}`} onClick={closeMenu}>
@@ -170,13 +158,11 @@ export default function Navbar({ profile, setProfile, handleLogout, onProfileCli
               </NavLink>
             </li>
 
-            <li
-              className="tw-relative"
-              onMouseEnter={handleMouseEnterServices}
-              onMouseLeave={handleMouseLeaveServices}
-            >
-              <NavLink
-                className={({ isActive }) => `tw-flex tw-items-center tw-gap-1 tw-py-1 tw-text-yellow-400 hover:tw-text-yellow-300 hover:tw-underline tw-transition tw-duration-150 tw-font-medium ${isActive ? "tw-text-white" : ""}`}
+            {/* SERVICES DROPDOWN - click toggle only */}
+            <li ref={servicesRef} className="tw-relative">
+              <button
+                onClick={() => setIsServicesOpen(prev => !prev)}
+                className="tw-flex tw-items-center tw-gap-1 tw-py-1 tw-text-yellow-400 hover:tw-text-yellow-300 hover:tw-underline tw-transition tw-duration-150 tw-font-medium tw-w-full tw-text-left"
               >
                 {t("services")}
                 <div className={`tw-transition-transform tw-duration-200 ${isServicesOpen ? "tw-rotate-180" : ""}`}>
@@ -184,29 +170,24 @@ export default function Navbar({ profile, setProfile, handleLogout, onProfileCli
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
-              </NavLink>
+              </button>
 
               {isServicesOpen && (
-                <div
-                  className="tw-absolute tw-left-0 tw-top-full tw-mt-2 tw-min-w-48 tw-bg-gray-900 tw-rounded-lg tw-shadow-xl tw-z-50"
-                  onMouseEnter={() => {
-                    if (servicesTimeoutRef.current) {
-                      clearTimeout(servicesTimeoutRef.current);
-                    }
-                    setIsServicesOpen(true);
-                  }}
-                  onMouseLeave={handleMouseLeaveServices}
-                >
+                <div className="tw-absolute tw-left-0 tw-top-full tw-mt-2 tw-min-w-48 tw-bg-gray-900 tw-rounded-lg tw-shadow-xl tw-z-50">
                   <div className="tw-py-2">
-                    {serviceOptions.map((serviceOpt, idx) => (
-                      <button
-                        key={`${serviceOpt}-${idx}`}
-                        onClick={() => handleServiceSelect(serviceOpt)}
-                        className="tw-block tw-w-full tw-text-left tw-px-4 tw-py-3 tw-text-yellow-400 hover:tw-bg-gray-800 tw-transition tw-duration-150 tw-border-t tw-border-gray-700 first:tw-border-t-0"
-                      >
-                        {serviceOpt}
-                      </button>
-                    ))}
+                    {serviceOptions.length > 0 ? (
+                      serviceOptions.map((serviceOpt, idx) => (
+                        <button
+                          key={`${serviceOpt}-${idx}`}
+                          onClick={() => handleServiceSelect(serviceOpt)}
+                          className="tw-block tw-w-full tw-text-left tw-px-4 tw-py-3 tw-text-yellow-400 hover:tw-bg-gray-800 tw-transition tw-duration-150 tw-border-t tw-border-gray-700 first:tw-border-t-0"
+                        >
+                          {serviceOpt}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="tw-px-4 tw-py-3 tw-text-gray-400">No services available</div>
+                    )}
                   </div>
                 </div>
               )}
@@ -236,7 +217,6 @@ export default function Navbar({ profile, setProfile, handleLogout, onProfileCli
               </NavLink>
             </li>
 
-            {/* ALWAYS SHOW LOGIN/REGISTER when profile is null, otherwise show profile */}
             {profile ? (
               <>
                 <li>

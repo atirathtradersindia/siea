@@ -3,6 +3,8 @@ import React, { useEffect, useState, useRef } from "react";
 import { db } from "../firebase";
 import { ref, onValue } from "firebase/database";
 import { useNavigate } from "react-router-dom";
+import { calculateCIFUSD } from "../utils/pricingUtils";
+
 
 const Prices = () => {
   const [marketRatesData, setMarketRatesData] = useState({});
@@ -416,62 +418,22 @@ const Prices = () => {
       const exMillMin = parseFloat(item.Ex_Mill_Min || 0);
       const exMillMax = parseFloat(item.Ex_Mill_Max || 0);
 
-      // -------- FOB (ExMill + 4000 INR) --------
-      const fobMinINR = exMillMin + 4000;
-      const fobMaxINR = exMillMax + 4000;
+      const {
+        fobMinUSD,
+        fobMaxUSD,
+        cifMinUSD,
+        cifMaxUSD
+      } = calculateCIFUSD(
+        exMillMin,
+        exMillMax,
+        exchangeRates.INR,
+        region,
+        country,
+        destinationPort
+      );
 
-      // -------- Convert FOB to USD --------
-      const fobMinUSD = fobMinINR / exchangeRates.INR;
-      const fobMaxUSD = fobMaxINR / exchangeRates.INR;
 
-      // -------- FREIGHT LOGIC --------
-      let freight = 0;
 
-      const regionLower = (region || "").toLowerCase().trim();
-
-      // -------- ASIA --------
-      if (regionLower.includes("asia")) {
-        freight = 20;
-      }
-
-      // -------- AFRICA --------
-      else if (regionLower.includes("africa")) {
-        freight = 40;
-      }
-
-      // -------- EUROPE --------
-      else if (regionLower.includes("europe")) {
-        freight = 60;
-      }
-
-      // -------- USA / NORTH AMERICA --------
-      else if (
-        regionLower.includes("north america") ||
-        countryLower.includes("usa") ||
-        countryLower.includes("united states")
-      ) {
-        freight = 80;
-      }
-
-      // -------- GULF / MIDDLE EAST --------
-      else if (
-        regionLower.includes("middle east") ||
-        regionLower.includes("gulf")
-      ) {
-        if (portLower.includes("jebel ali")) {
-          freight = 15;
-        }
-        else if (countryLower.includes("saudi")) {
-          freight = 50;
-        }
-        else {
-          freight = 40;
-        }
-      }
-
-      // -------- CIF --------
-      const cifMinUSD = fobMinUSD + freight;
-      const cifMaxUSD = fobMaxUSD + freight;
 
       const matchesPort =
         selectedCifDestination.port === "All Ports" ||

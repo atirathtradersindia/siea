@@ -32,7 +32,7 @@ export default function Home() {
                 {t("hero_subtitle")}
               </p>
               <div className="tw-mt-5 tw-flex tw-gap-3">
-                <Link to="/products" className="btn btn-light">
+                <Link to="/market-rates" className="btn btn-gold">
                   {t("view_prices")}
                 </Link>
                 <Link to="/feedback" className="btn btn-outline-light">

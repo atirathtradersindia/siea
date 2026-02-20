@@ -4,6 +4,8 @@ import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/solid';
 import { db } from '../firebase';
 import { ref, onValue } from 'firebase/database';
 import { useNavigate } from 'react-router-dom';
+import { calculateCIFUSD } from "../utils/pricingUtils";
+
 
 const SeaFreight = () => {
     const [selectedRegion, setSelectedRegion] = useState(null);
@@ -16,6 +18,9 @@ const SeaFreight = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+    const returnTo = localStorage.getItem("seaFreightReturnTo");
+    const isFromOrderFlow = !!returnTo;
+
 
     const [exchangeRates, setExchangeRates] = useState({
         USD: 1,
@@ -33,38 +38,35 @@ const SeaFreight = () => {
     }, []);
 
 
-    // Fetch freight data from Firebase
     useEffect(() => {
-        const fetchFreightData = () => {
-            try {
-                const freightRef = ref(db, 'cifRates');
+        const freightRef = ref(db, "cifRates");
 
-                const unsubscribe = onValue(freightRef, (snapshot) => {
-                    if (snapshot.exists()) {
-                        const data = snapshot.val();
-                        const transformedData = transformFreightData(data);
-                        setFreightData(transformedData);
-                        setLoading(false);
-                    } else {
-                        setFreightData([]);
-                        setLoading(false);
-                    }
-                }, (error) => {
-                    console.error('Error fetching freight data:', error);
-                    setError(error.message);
-                    setLoading(false);
-                });
+        const unsubscribe = onValue(freightRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.val();
 
-                return unsubscribe;
-            } catch (error) {
-                console.error('Error in fetchFreightData:', error);
-                setError(error.message);
+                console.log("Freight Raw Data:", data); // 🔍 Debug
+
+                const transformed = transformFreightData(data);
+
+                console.log("Transformed Data:", transformed); // 🔍 Debug
+
+                setFreightData(transformed);
+                setLoading(false);
+            } else {
+                console.log("No freight data found");
+                setFreightData([]);
                 setLoading(false);
             }
-        };
+        }, (error) => {
+            console.error("Freight fetch error:", error);
+            setError(error.message);
+            setLoading(false);
+        });
 
-        fetchFreightData();
-    }, []);
+        return () => unsubscribe();
+    }, [exchangeRates]);
+
 
     // Transform Firebase data into the structure your component expects
     const transformFreightData = (firebaseData) => {
@@ -84,40 +86,18 @@ const SeaFreight = () => {
             const exMillMin = parseFloat(item.Ex_Mill_Min || 0);
             const exMillMax = parseFloat(item.Ex_Mill_Max || 0);
 
-            const fobMinINR = exMillMin + 4000;
-            const fobMaxINR = exMillMax + 4000;
+            const {
+                cifMinUSD,
+                cifMaxUSD
+            } = calculateCIFUSD(
+                exMillMin,
+                exMillMax,
+                exchangeRates.INR,
+                region,
+                country,
+                port
+            );
 
-            const fobMinUSD = fobMinINR / exchangeRates.INR;
-            const fobMaxUSD = fobMaxINR / exchangeRates.INR;
-
-
-            let freight = 0;
-
-            const regionLower = (region || "").toLowerCase();
-            const countryLower = (country || "").toLowerCase();
-            const portLower = (port || "").toLowerCase();
-
-            // Asia
-            if (regionLower.includes("asia")) {
-                freight = 20;
-            }
-            else if (regionLower.includes("africa")) {
-                freight = 40;
-            }
-            else if (regionLower.includes("europe")) {
-                freight = 60;
-            }
-            else if (regionLower.includes("north america") || countryLower.includes("usa")) {
-                freight = 80;
-            }
-            else if (regionLower.includes("middle east") || regionLower.includes("gulf")) {
-                if (portLower.includes("jebel ali")) freight = 15;
-                else if (countryLower.includes("saudi")) freight = 50;
-                else freight = 40;
-            }
-
-            const cifMin = fobMinUSD + freight;
-            const cifMax = fobMaxUSD + freight;
 
 
             if (!regionMap.has(region)) {
@@ -144,8 +124,8 @@ const SeaFreight = () => {
                     container: container,
                     originPort: item['Origin Port'],
                     grade: item.Grade,
-                    cifMin: cifMin,
-                    cifMax: cifMax,
+                    cifMin: cifMinUSD,
+                    cifMax: cifMaxUSD,
                     cifSingle: item.CIF_USD || 0
                 });
             }
@@ -184,29 +164,35 @@ const SeaFreight = () => {
 
     // --- MODIFIED: return to the page stored in localStorage, DO NOT remove returnTo ---
     const handlePortSelect = (port) => {
+
+        // ❌ If NOT from order flow → do nothing
+        if (!isFromOrderFlow) return;
+
+        // ✅ Only allow selection in order flow
         setSelectedPort(port);
+
+        let cifUSD = 0;
+
+        if (port.cifSingle > 0) {
+            cifUSD = parseFloat(port.cifSingle);
+        } else if (port.cifMin > 0 && port.cifMax > 0) {
+            cifUSD = (parseFloat(port.cifMin) + parseFloat(port.cifMax)) / 2;
+        }
 
         const destinationData = {
             region: selectedRegion,
             country: selectedCountry,
             port: port.name,
-            container: port.container || "All Containers"
+            container: port.container || "All Containers",
+            cifUSD: cifUSD
         };
 
-        localStorage.setItem('selectedCifDestination', JSON.stringify(destinationData));
-        localStorage.setItem('forceCurrencyToUSD', 'true');
+        localStorage.setItem("selectedCifDestination", JSON.stringify(destinationData));
+        localStorage.setItem("forceCurrencyToUSD", "true");
 
-        const returnTo = localStorage.getItem('seaFreightReturnTo');
-        console.log('🔁 SeaFreight handlePortSelect');
-        console.log('   returnTo from localStorage:', returnTo);
-
-        if (returnTo) {
-            console.log('   Navigating to:', returnTo);
-            navigate(returnTo);
-        } else {
-            console.log('   No returnTo found, defaulting to /market-rates');
-            navigate('/market-rates');
-        }
+        setTimeout(() => {
+            window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+        }, 200);
     };
 
     if (loading) {
@@ -328,6 +314,18 @@ const SeaFreight = () => {
                     <div style={styles.countryContent}>
                         {selectedCountry ? (
                             <>
+
+                                {isFromOrderFlow && !selectedPort && (
+                                    <p style={{
+                                        textAlign: "center",
+                                        color: "#FFD700",
+                                        marginBottom: "15px",
+                                        fontSize: "14px"
+                                    }}>
+                                        Please click on a port to select your destination.
+                                    </p>
+                                )}
+
                                 <h3 style={styles.countryHeading}>
                                     Ports in {selectedCountry}
                                     {selectedRegion && ` (${selectedRegion})`}
@@ -339,13 +337,31 @@ const SeaFreight = () => {
                                         ?.ports.map((port, index) => (
                                             <div
                                                 key={`${port.name}-${index}`}
-                                                style={styles.portListItem}
-                                                onClick={() => handlePortSelect(port)}
+                                                style={{
+                                                    ...styles.portListItem,
+                                                    cursor: isFromOrderFlow ? "pointer" : "default",
+                                                    border: selectedPort?.name === port.name ? "2px solid #FFD700" : "1px solid #333",
+                                                    background: selectedPort?.name === port.name
+                                                        ? "rgba(255,215,0,0.15)"
+                                                        : "#1a1a1a"
+                                                }}
+                                                onClick={() => isFromOrderFlow && handlePortSelect(port)}
                                             >
                                                 <div style={styles.portListContent}>
                                                     <div style={styles.portNameContainer}>
                                                         <span style={styles.portListName}>{port.name}</span>
                                                     </div>
+                                                    {selectedPort?.name === port.name && (
+                                                        <span style={{
+                                                            marginLeft: "10px",
+                                                            color: "#FFD700",
+                                                            fontSize: "12px",
+                                                            fontWeight: "600"
+                                                        }}>
+                                                            ✔ Selected
+                                                        </span>
+                                                    )}
+
 
                                                     <div style={styles.priceContainer}>
                                                         {port.cifMin > 0 && port.cifMax > 0 ? (
@@ -377,6 +393,31 @@ const SeaFreight = () => {
                         )}
                     </div>
                 </div>
+                {selectedPort && isFromOrderFlow && (
+                    <div style={{ textAlign: "center", marginTop: "25px" }}>
+                        <button
+                            style={{
+                                padding: "10px 30px",
+                                background: "#FFD700",
+                                color: "#000",
+                                border: "none",
+                                borderRadius: "6px",
+                                fontWeight: "600",
+                                cursor: "pointer"
+                            }}
+                            onClick={() => {
+                                navigate(returnTo);
+                                setTimeout(() => {
+                                    localStorage.removeItem("seaFreightReturnTo");
+                                }, 100);
+                            }}
+
+                        >
+                            Continue to Order
+                        </button>
+                    </div>
+                )}
+
             </div>
         </div>
     );

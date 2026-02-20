@@ -25,10 +25,6 @@ const DOMESTIC_FREIGHT_RATES_PER_BAG = {
   "Air Freight": 350,
 };
 
-const INTERNATIONAL_FALLBACK_RATES_PER_TON = {
-  "Sea Freight": 800,
-  "Air Freight": 1500,
-};
 
 const BuyModal = ({
   isOpen,
@@ -116,6 +112,13 @@ const BuyModal = ({
     }
   }, [isDomestic]);
 
+  useEffect(() => {
+    if (!isDomestic) {
+      setTransportMode("Sea Freight");
+    }
+  }, [isDomestic]);
+
+
   // ---------- Determine available modes based on destination country ----------
   const getAvailableModes = () => {
     if (!selectedDestination) return INTERNATIONAL_MODES;
@@ -175,16 +178,26 @@ const BuyModal = ({
   // ---------- Helper: get total weight from cart items (kg) ----------
   const getCartTotalWeightKg = () => {
     if (!isCartOrder) return 0;
+
     return cartItems.reduce((sum, item) => {
       let qtyPerBag = 0;
-      if (item.quantity === "1ton") qtyPerBag = 1000;
-      else if (typeof item.quantity === "string" && item.quantity.includes("kg"))
-        qtyPerBag = parseFloat(item.quantity.replace("kg", "")) || 0;
-      else if (typeof item.quantity === "number") qtyPerBag = item.quantity;
+
+      const qtyString = item.quantityUnit || item.quantity;
+
+      if (qtyString === "1ton") {
+        qtyPerBag = 1000;
+      } else if (typeof qtyString === "string" && qtyString.includes("kg")) {
+        qtyPerBag = parseFloat(qtyString.replace("kg", "")) || 0;
+      } else if (typeof qtyString === "number") {
+        qtyPerBag = qtyString;
+      }
+
       const bags = item.numberOfBags || 1;
+
       return sum + qtyPerBag * bags;
     }, 0);
   };
+
 
   // ---------- Fetch product grades (single product only) ----------
   useEffect(() => {
@@ -367,48 +380,23 @@ const BuyModal = ({
 
   // ---------- Calculate CIF price (USD per MT) based on destination, grade, packing, AND transport mode ----------
   useEffect(() => {
-    if (!selectedDestination || !selectedDestination.port || !grade || !packing || !transportMode || isCartOrder || isDomestic) {
+    if (!selectedDestination || !selectedDestination.cifUSD || isDomestic) {
       setCifPriceUSD(0);
       setCifPriceConverted(0);
       return;
     }
 
-    const matchingRates = cifRatesData.filter((item) => {
-      const destPort = item["Destination Port"] || item.destinationPort || item.Destination;
-      const itemGrade = item.Grade || item.grade || "";
-      const itemContainer = item.Container || item.container || "20' Container";
-      const itemMode = item.Mode || item.mode || item["Transport Mode"] || "";
+    const cifUSD = parseFloat(selectedDestination.cifUSD) || 0;
 
-      const gradeMatch = itemGrade.toLowerCase().includes(grade.toLowerCase());
-      const portMatch = destPort === selectedDestination.port;
-      const containerMatch =
-        selectedDestination.container === "All Containers" ||
-        itemContainer === selectedDestination.container;
-      const modeMatch = itemMode.toLowerCase() === transportMode.toLowerCase();
+    setCifPriceUSD(cifUSD);
 
-      return gradeMatch && portMatch && containerMatch && modeMatch;
-    });
 
-    if (matchingRates.length === 0) {
-      setCifPriceUSD(0);
-      setCifPriceConverted(0);
-      return;
-    }
-
-    const rate = matchingRates[0];
-    let cifUSD = parseFloat(rate.Region_Grade_CIF_Min || rate.CIF_USD || rate.CIF || 0);
-    if (isNaN(cifUSD)) cifUSD = 0;
-
-    const packingAdjustment = getPackingAdjustment(packing);
-    const adjustedCifUSD = cifUSD * packingAdjustment;
-
-    setCifPriceUSD(adjustedCifUSD);
-
-    // Convert to selected currency for display (even if currency INR)
-    const cifINR = adjustedCifUSD * exchangeRates.USD;
+    const cifINR = cifUSD * exchangeRates.USD;
     const cifInCurrency = cifINR / exchangeRates[currency];
+
     setCifPriceConverted(cifInCurrency);
-  }, [selectedDestination, grade, packing, transportMode, cifRatesData, currency, exchangeRates, isCartOrder, isDomestic]);
+
+  }, [selectedDestination, currency, exchangeRates, isDomestic]);
 
   // ---------- Price calculation (ALL PRICES IN INR internally) ----------
   // Insurance is REMOVED.
@@ -416,108 +404,124 @@ const BuyModal = ({
   // - International: freight is added only if cif === "Yes". If CIF rate is available, use it per ton;
   //                  else use international fallback rate per ton.
   useEffect(() => {
+
     if (isCartOrder) {
+
       // ---------- CART ORDER ----------
       const cartTotalINR = cartTotal;
       const totalBags = getCartTotalBags();
       const totalWeightKg = getCartTotalWeightKg();
       const totalWeightInTons = totalWeightKg / 1000;
 
-      // Use estimate if actual weight is zero (for fallback)
-      const actualOrEstimatedTons = totalWeightKg > 0 ? totalWeightInTons : Math.ceil(cartTotalINR / 10000) * 0.1 || 1;
-
-      // Packing & logo: per bag
       const pPriceINR = packing ? (packingPriceMap[packing] || 0) * totalBags : 0;
-      const lPriceINR = customLogo === "Yes" ? 879.8 * totalBags : 0;
+      const lPriceINR = 0;
 
       let fPriceINR = 0;
+      let totalINR = 0;
 
       if (isDomestic) {
-        // Domestic freight – fixed rate PER BAG
         const ratePerBag = DOMESTIC_FREIGHT_RATES_PER_BAG[transportMode];
-        if (ratePerBag) {
-          fPriceINR = ratePerBag * totalBags;
-        }
+        fPriceINR = ratePerBag ? ratePerBag * totalBags : 0;
+
+        totalINR = cartTotalINR + pPriceINR + fPriceINR;
+
       } else {
-        // International – freight added only if cif === "Yes"
+
         if (cif === "Yes") {
+
           if (selectedDestination && selectedDestination.port && cifPriceUSD > 0) {
-            // Use CIF rate from database (per ton)
+
             const cifPriceINR = cifPriceUSD * exchangeRates.USD;
-            fPriceINR = cifPriceINR * actualOrEstimatedTons;
+            fPriceINR = cifPriceINR * totalWeightInTons;
+
+            totalINR = cartTotalINR + pPriceINR + fPriceINR;
+
           } else {
-            // No CIF rate available – use international fallback rate PER TON
-            const ratePerTon = INTERNATIONAL_FALLBACK_RATES_PER_TON[transportMode];
-            if (ratePerTon) {
-              fPriceINR = ratePerTon * actualOrEstimatedTons;
-            }
+
+
+            totalINR = cartTotalINR + pPriceINR + lPriceINR + fPriceINR;
           }
+
+        } else {
+          totalINR = cartTotalINR + pPriceINR + lPriceINR;
         }
       }
-
-      const totalINR = cartTotalINR + pPriceINR + lPriceINR + fPriceINR;
 
       setGradePriceINR(0);
       setPackingPriceINR(pPriceINR);
       setQuantityPriceINR(cartTotalINR);
-      setLogoPriceINR(lPriceINR);
       setFreightPriceINR(fPriceINR);
       setTotalPriceINR(totalINR);
+
     } else {
+
       // ---------- SINGLE PRODUCT ----------
       const basePricePerQtlINR = liveGradePricePerKg * 100;
-      let qtyInKg = quantity === "1ton" ? 1000 : parseFloat(quantity.replace("kg", "")) || 0;
+
+      let qtyInKg =
+        quantity === "1ton"
+          ? 1000
+          : parseFloat(quantity.replace("kg", "")) || 0;
+
       const qtyInQuintals = qtyInKg / 100;
       const qPriceINR = basePricePerQtlINR * qtyInQuintals * numberOfBags;
 
-      const pPriceINR = packing ? (packingPriceMap[packing] || 0) * numberOfBags : 0;
-      const lPriceINR = customLogo === "Yes" ? 879.8 * numberOfBags : 0;
+      const pPriceINR = packing
+        ? (packingPriceMap[packing] || 0) * numberOfBags
+        : 0;
+
+      const lPriceINR = 0;
+
 
       const totalWeightInTons = (qtyInKg * numberOfBags) / 1000;
 
       let fPriceINR = 0;
+      let totalINR = 0;
 
       if (isDomestic) {
-        // Domestic freight – fixed rate PER BAG
+
         const ratePerBag = DOMESTIC_FREIGHT_RATES_PER_BAG[transportMode];
-        if (ratePerBag) {
-          fPriceINR = ratePerBag * numberOfBags;
-        }
+        fPriceINR = ratePerBag ? ratePerBag * numberOfBags : 0;
+
+        totalINR = qPriceINR + pPriceINR + fPriceINR;
+
       } else {
-        // International – freight added only if cif === "Yes"
+
         if (cif === "Yes") {
+
           if (selectedDestination && selectedDestination.port && cifPriceUSD > 0) {
-            // Use CIF rate from database (per ton)
+
             const cifPriceINR = cifPriceUSD * exchangeRates.USD;
             fPriceINR = cifPriceINR * totalWeightInTons;
+
+            totalINR = qPriceINR + pPriceINR + fPriceINR;
+
           } else {
-            // No CIF rate available – use international fallback rate PER TON
-            const ratePerTon = INTERNATIONAL_FALLBACK_RATES_PER_TON[transportMode];
-            if (ratePerTon) {
-              fPriceINR = ratePerTon * totalWeightInTons;
-            }
+
+
+            totalINR = qPriceINR + pPriceINR + fPriceINR;
           }
+
+        } else {
+
+          totalINR = qPriceINR + pPriceINR + lPriceINR;
         }
       }
-
-      const totalINR = qPriceINR + pPriceINR + lPriceINR + fPriceINR;
 
       setGradePriceINR(basePricePerQtlINR);
       setPackingPriceINR(pPriceINR);
       setQuantityPriceINR(qPriceINR);
-      setLogoPriceINR(lPriceINR);
       setFreightPriceINR(fPriceINR);
       setTotalPriceINR(totalINR);
     }
+
   }, [
     liveGradePricePerKg,
     cif,
     grade,
     packing,
     quantity,
-    currency,
     customLogo,
-    product,
     isCartOrder,
     cartTotal,
     numberOfBags,
@@ -528,6 +532,7 @@ const BuyModal = ({
     isDomestic,
     transportMode,
   ]);
+
 
   // ---------- Display values (convert INR to selected currency) ----------
   const getDisplayPrice = (priceINR) => {
@@ -541,6 +546,16 @@ const BuyModal = ({
   const displayLogoPrice = getDisplayPrice(logoPriceINR);
   const displayFreightPrice = getDisplayPrice(freightPriceINR);
   const displayTotalPrice = getDisplayPrice(totalPriceINR);
+
+  // ---------- Calculate total weight in MT for display ----------
+  const totalWeightInTons = isCartOrder
+    ? getCartTotalWeightKg() / 1000
+    : (
+      quantity === "1ton"
+        ? numberOfBags
+        : ((parseFloat(quantity?.replace("kg", "") || 0) * numberOfBags) / 1000)
+    );
+
 
   // ---------- Validation functions ----------
   const validatePhoneNumber = (num, code) => {
@@ -616,7 +631,6 @@ const BuyModal = ({
     navigate("/sea-freight");
   };
 
-  // ---------- Restore destination after returning from SeaFreight ----------
   useEffect(() => {
     if (isOpen) {
       const returnTo = localStorage.getItem("seaFreightReturnTo");
@@ -726,11 +740,10 @@ const BuyModal = ({
       message += ` - ${t("packing")}: ${t(packing.toLowerCase().replace(/\s/g, "_"))}\n`;
       message += ` - ${t("quantity_per_bag")}: ${quantity}\n`;
       message += ` - ${t("number_of_bags")}: ${numberOfBags}\n`;
-      message += ` - ${t("total_quantity")}: ${
-        quantity === "1ton"
-          ? `${numberOfBags} ton`
-          : `${parseFloat(quantity.replace("kg", "")) * numberOfBags} kg`
-      }\n`;
+      message += ` - ${t("total_quantity")}: ${quantity === "1ton"
+        ? `${numberOfBags} ton`
+        : `${parseFloat(quantity.replace("kg", "")) * numberOfBags} kg`
+        }\n`;
       message += ` - ${t("origin_port")}: ${ORIGIN_PORT}\n`;
       if (selectedDestination) {
         message += ` - ${t("destination_port")}: ${selectedDestination.port} (${selectedDestination.country})\n`;
@@ -751,9 +764,10 @@ const BuyModal = ({
       message += ` - ${t("grade_price")}: ${sym}${displayGradePrice.toFixed(2)} ${t("per")} ${t("quintal")}\n`;
     }
 
-    message += ` - ${t("packing_price")}: ${sym}${displayPackingPrice.toFixed(2)} (${
-      isCartOrder ? `${getCartTotalBags()} ${t("bags")}` : numberOfBags + " " + t("bags")
-    })\n`;
+    message += ` - ${t("packing_price")}: ${sym}${displayPackingPrice.toFixed(2)} (${isCartOrder ? `${getCartTotalBags()} ${t("units")}`
+      : numberOfBags + " " + t("units")})
+
+      })\n`;
     message += ` - ${t("quantity_price")}: ${sym}${displayQuantityPrice.toFixed(2)}\n`;
 
     // Transport line – International (with CIF and ports)
@@ -771,9 +785,8 @@ const BuyModal = ({
       message += ` - ${t("transport")} (${transportMode}): ${sym}${displayFreightPrice.toFixed(2)}\n`;
     }
 
-    message += ` - ${t("total_price")}: ${sym}${displayTotalPrice.toFixed(2)} (${
-      cif === "Yes" ? t("cif_term") : t("fob_term")
-    })\n\n`;
+    message += ` - ${t("total_price")}: ${sym}${displayTotalPrice.toFixed(2)} (${cif === "Yes" ? t("cif_term") : t("fob_term")
+      })\n\n`;
     message += `5. **${t("additional_information")}**\n`;
     message += ` ${additionalInfo || t("none")}\n\n${t("thank_you")}\n\n${t("best_regards")},\n${fullName}`;
 
@@ -789,8 +802,8 @@ const BuyModal = ({
       totalQuantity: isCartOrder
         ? `${getCartTotalWeightKg()} kg`
         : quantity === "1ton"
-        ? `${numberOfBags} ton`
-        : `${parseFloat(quantity.replace("kg", "")) * numberOfBags} kg`,
+          ? `${numberOfBags} ton`
+          : `${parseFloat(quantity.replace("kg", "")) * numberOfBags} kg`,
       originPort: ORIGIN_PORT,
       destinationPort: selectedDestination?.port || null,
       destinationCountry: selectedDestination?.country || null,
@@ -915,7 +928,7 @@ const BuyModal = ({
                     <>
                       <label>{t("order_type")}<input type="text" value={t("shopping_cart")} disabled className="input-field" /></label>
                       <label>{t("total_items")}<input type="text" value={`${cartItems.length} ${t("items")}`} disabled className="input-field" /></label>
-                      <label>{t("total_bags")}<input type="text" value={`${getCartTotalBags()} ${t("bags")}`} disabled className="input-field" /></label>
+                      <label>{t("total_units")}<input type="text" value={`${getCartTotalBags()} ${t("units")}`} disabled className="input-field" /></label>
                       <div className="tw-mt-4 tw-space-y-3">
                         <h4 className="tw-text-yellow-400 tw-font-semibold">{t("selected_products")}</h4>
                         {cartItems.map((item, index) => (
@@ -926,7 +939,9 @@ const BuyModal = ({
                                 <p className="tw-text-yellow-300 tw-font-semibold">{index + 1}. {item.name}</p>
                                 {item.grade && <p className="tw-text-xs tw-text-yellow-200/70">Grade: {item.grade}</p>}
                                 <p className="tw-text-xs tw-text-yellow-200/70">Qty: {item.quantityUnit || `${item.quantity} unit`}</p>
-                                <p className="tw-text-xs tw-text-yellow-200/70">Bags: {item.numberOfBags || 1}</p>
+                                <p className="tw-text-xs tw-text-yellow-200/70">
+                                  Units: {item.numberOfBags || 1}
+                                </p>
                                 {item.pricePerBag && <p className="tw-text-xs tw-text-yellow-200/70">Price per bag: ₹{item.pricePerBag.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</p>}
                               </div>
                               <div className="tw-text-right">
@@ -954,7 +969,8 @@ const BuyModal = ({
                   {!isCartOrder && (
                     <>
                       <label>{t("quantity")} *<select value={quantity} onChange={e => setQuantity(e.target.value)} required className="select-field"><option value="">{t("select_quantity")}</option>{quantityOptions.map((q, i) => <option key={i} value={q}>{q}</option>)}</select></label>
-                      <label>{t("number_of_bags")} *<div className="tw-flex tw-items-center tw-gap-2"><button type="button" onClick={() => setNumberOfBags(prev => Math.max(1, prev - 1))} className="tw-w-8 tw-h-8 tw-flex tw-items-center tw-justify-center tw-bg-yellow-400 tw-text-black tw-rounded-md hover:tw-bg-yellow-300 tw-font-bold">-</button><input type="number" min="1" max="1000" value={numberOfBags} onChange={e => { const val = parseInt(e.target.value) || 1; setNumberOfBags(Math.max(1, Math.min(1000, val))); }} className="tw-flex-1 tw-text-center tw-bg-black/50 tw-border tw-border-yellow-400/30 tw-rounded tw-p-2 tw-text-white" /><button type="button" onClick={() => setNumberOfBags(prev => Math.min(1000, prev + 1))} className="tw-w-8 tw-h-8 tw-flex tw-items-center tw-justify-center tw-bg-yellow-400 tw-text-black tw-rounded-md hover:tw-bg-yellow-300 tw-font-bold">+</button><span className="tw-ml-2 tw-text-yellow-200">{numberOfBags} {t("bags")}</span></div><p className="tw-text-xs tw-text-gray-400 tw-mt-1">{t("bag_calculation_note")}</p></label>
+                      <label>{t("number_of_units")} *
+                        <div className="tw-flex tw-items-center tw-gap-2"><button type="button" onClick={() => setNumberOfBags(prev => Math.max(1, prev - 1))} className="tw-w-8 tw-h-8 tw-flex tw-items-center tw-justify-center tw-bg-yellow-400 tw-text-black tw-rounded-md hover:tw-bg-yellow-300 tw-font-bold">-</button><input type="number" min="1" max="1000" value={numberOfBags} onChange={e => { const val = parseInt(e.target.value) || 1; setNumberOfBags(Math.max(1, Math.min(1000, val))); }} className="tw-flex-1 tw-text-center tw-bg-black/50 tw-border tw-border-yellow-400/30 tw-rounded tw-p-2 tw-text-white" /><button type="button" onClick={() => setNumberOfBags(prev => Math.min(1000, prev + 1))} className="tw-w-8 tw-h-8 tw-flex tw-items-center tw-justify-center tw-bg-yellow-400 tw-text-black tw-rounded-md hover:tw-bg-yellow-300 tw-font-bold">+</button><span className="tw-ml-2 tw-text-yellow-200">{numberOfBags} {t("units")}</span></div></label>
                     </>
                   )}
 
@@ -988,30 +1004,6 @@ const BuyModal = ({
                             >
                               {t("change")}
                             </button>
-                          </div>
-
-                          {/* TRANSPORT MODE DROPDOWN - inside destination block for international */}
-                          <div className="tw-mt-2">
-                            <label className="tw-block tw-text-yellow-300 tw-text-sm tw-mb-1">
-                              {t("transport_mode")} *
-                            </label>
-                            <select
-                              value={transportMode}
-                              onChange={(e) => setTransportMode(e.target.value)}
-                              className="select-field tw-w-full"
-                              required={cif === "Yes" && currency !== "INR"}
-                            >
-                              {availableModes.map((mode) => (
-                                <option key={mode} value={mode}>
-                                  {mode}
-                                </option>
-                              ))}
-                            </select>
-                            <p className="tw-text-xs tw-text-gray-400 tw-mt-1">
-                              {selectedDestination.country?.toLowerCase() === "india"
-                                ? "Domestic shipment – all modes available"
-                                : "International shipment – Sea/Air only"}
-                            </p>
                           </div>
 
                           {cifPriceUSD > 0 && (
@@ -1054,9 +1046,7 @@ const BuyModal = ({
                           </option>
                         ))}
                       </select>
-                      <p className="tw-text-xs tw-text-gray-400 tw-mt-1">
-                        Domestic shipment – fixed cost per bag
-                      </p>
+
                     </div>
                   )}
 
@@ -1087,9 +1077,25 @@ const BuyModal = ({
                   </div>
                 )}
 
+                {!isDomestic && cif === "Yes" && selectedDestination && (
+                  <>
+                    <div className="bill-item tw-text-yellow-400">
+                      <span>
+                        CIF Rate per MT ({selectedDestination.port}):
+                      </span>
+                      <span>
+                        {currencySymbol}{cifPriceConverted.toFixed(2)} / MT
+                      </span>
+                    </div>
+
+                    <div className="tw-border-t tw-border-yellow-400/40 tw-my-2"></div>
+                  </>
+                )}
+
+
                 <div className="bill-item">
                   <span>{t("packing_price")}:</span>
-                  <span>{currencySymbol}{displayPackingPrice.toFixed(2)} {isCartOrder ? `(${getCartTotalBags()} ${t("bags")})` : `(${numberOfBags} ${t("bags")})`}</span>
+                  <span>{currencySymbol}{displayPackingPrice.toFixed(2)} {isCartOrder ? `(${getCartTotalBags()} ${t("units")})` : `(${numberOfBags} ${t("units")})`}</span>
                 </div>
 
                 <div className="bill-item">
@@ -1097,28 +1103,19 @@ const BuyModal = ({
                   <span>{currencySymbol}{displayQuantityPrice.toFixed(2)}</span>
                 </div>
 
-                {/* Transport line – International (with CIF and ports) */}
-                {!isDomestic && cif === "Yes" && selectedDestination && (
-                  <>
-                    {cifPriceUSD > 0 ? (
-                      <>
-                        <div className="bill-item tw-text-yellow-300">
-                          <span>{t("transport")} ({transportMode}, {ORIGIN_PORT} → {selectedDestination.port}):</span>
-                          <span>{currencySymbol}{displayFreightPrice.toFixed(2)}</span>
-                        </div>
-                        <div className="bill-item tw-text-xs tw-text-yellow-400/70">
-                          <span>{t("cif_rate")}:</span>
-                          <span>{currencySymbol}{cifPriceConverted.toFixed(2)} / MT</span>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="bill-item tw-text-yellow-300">
-                        <span>{t("transport")} ({transportMode}, {ORIGIN_PORT} → Standard Rate):</span>
-                        <span>{currencySymbol}{displayFreightPrice.toFixed(2)}</span>
-                      </div>
-                    )}
-                  </>
+                {!isDomestic && cif === "Yes" && selectedDestination && totalWeightInTons > 0 && (
+                  <div className="bill-item tw-text-yellow-300">
+                    <span>
+                      CIF Freight ({totalWeightInTons.toFixed(2)} MT):
+                    </span>
+                    <span>
+                      {currencySymbol}{displayFreightPrice.toFixed(2)}
+                    </span>
+                  </div>
                 )}
+
+
+
 
                 {/* Transport line – Domestic (no ports, per bag) */}
                 {isDomestic && (

@@ -43,12 +43,17 @@ const NavbarProd = ({ searchProducts, showProductsPage, showProfilePanel, profil
   };
 
   const handleGoSeaFreight = () => {
+    // 🔥 Clear order flow key when coming from navbar
+    localStorage.removeItem("seaFreightReturnTo");
+
     if (!isSeaFreight) navigate('/sea-freight');
+
     if (isNavOpen) {
       setIsNavOpen(false);
       document.body.style.overflow = 'auto';
     }
   };
+
 
   // Close mobile menu when clicking outside
   useEffect(() => {
@@ -112,7 +117,7 @@ const NavbarProd = ({ searchProducts, showProductsPage, showProfilePanel, profil
       setIsNavOpen(false);
       document.body.style.overflow = 'auto';
     }
-    
+
     if (handleLogout) {
       handleLogout();
     }
@@ -259,7 +264,7 @@ const NavbarProd = ({ searchProducts, showProductsPage, showProfilePanel, profil
             >
               <span>{t('login')}</span>
             </button>
-            
+
             <button
               className="nav-btn tw-bg-yellow-400 tw-text-black hover:tw-bg-yellow-300"
               onClick={() => {
