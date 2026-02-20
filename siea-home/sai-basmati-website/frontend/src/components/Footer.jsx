@@ -9,7 +9,7 @@ export default function Footer() {
     <footer id="footer" className="tw-border-t tw-border-yellow-600 tw-bg-black tw-py-4 sm:tw-py-6">
       <div className="tw-w-full tw-px-4 sm:tw-px-6 tw-max-w-7xl tw-mx-auto">
         <div className="tw-flex tw-flex-col tw-items-center md:tw-flex-row md:tw-items-center md:tw-justify-between tw-gap-3 sm:tw-gap-4">
-          <div className="tw-flex tw-flex-col tw-items-center md:tw-flex-row md:tw-items-center tw-gap-3 sm:tw-gap-4">
+          <div className="tw-flex tw-flex-row tw-items-center tw-gap-3 sm:tw-gap-4">
             <img
               src={logoUrl}
               alt={t("company_alt_text")}
